@@ -3,7 +3,7 @@ import os
 import string
 
 
-def format_name(self, author: discord.abc.User):
+def format_name(author: discord.abc.User):
     """Remove readable ASCII characters"""
 
     name = author.name
@@ -20,12 +20,12 @@ def format_name(self, author: discord.abc.User):
     return updated_name
 
 
-def format_info(self, message: discord.Message):
+def format_info(guild: discord.Guild, message: discord.Message):
     """Retrieves information about a member of a guild"""
 
     user = message.author
-    guild = discord.utils.get(self.bot.guilds, id=os.getenv("GUILD_ID"))
     member = guild.get_member(user.id)
+    print(user, member)
     avatar_url = user.avatar_url
     color = 0
 

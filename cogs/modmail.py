@@ -5,7 +5,6 @@ import re
 
 from discord.ext import commands
 from urllib.parse import urlparse
-
 from discord.errors import NotFound
 from cogs.utils.embed import command_embed, blocked_embed, close_modmail_embed
 from cogs.utils.format import format_info, format_name
@@ -16,7 +15,7 @@ class Modmail(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def setup(self, ctx):
+    async def setup(self, ctx: commands.Context):
         """Sets up a server for modmail"""
 
         if discord.utils.get(ctx.guild.categories, name="📋 Support"):
@@ -43,7 +42,7 @@ class Modmail(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def disable(self, ctx):
+    async def disable(self, ctx: commands.Context):
         """Close all threads and disable modmail."""
 
         if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
@@ -84,9 +83,9 @@ class Modmail(commands.Cog):
         except NotFound as e:
             pass
 
-    @commands.command(name="close")
+    @commands.command()
     @commands.has_any_role("Server Support")
-    async def close(self, ctx):
+    async def close(self, ctx: commands.Context):
         """Close the current thread."""
 
         if "User ID:" not in str(ctx.channel.topic):
@@ -157,7 +156,7 @@ class Modmail(commands.Cog):
 
         await message.add_reaction("✅")
 
-        guild = discord.utils.get(self.bot.guilds, id=os.getenv("GUILD_ID"))
+        guild = discord.utils.get(self.bot.guilds, id=int(os.getenv("GUILD_ID")))
         support_category = discord.utils.get(guild.categories, name="📋 Support")
         await self.validate_blocked_user(message, support_category)
         
@@ -170,27 +169,27 @@ class Modmail(commands.Cog):
         embed.color = discord.Color.green()
 
         if channel is not None:
-            await self.send_mail(message, channel, mod=False)
-        else:
-            await message.author.send(embed=embed)
-            # overwrite={
-            # message.author: discord.PermissionOverwrite(read_messages=True),
-            # guild.default_role: discord.PermissionOverwrite(read_messages=False)
-            # }
-            modmail_channel = await guild.create_text_channel(
-                name=self.format_name(author),
-                # overwrites=overwrite,
-                category=support_category,
-            )
+            return await self.send_mail(message, channel, is_moderator=False)
 
-            await modmail_channel.edit(topic=topic)
-            support = discord.utils.get(guild.roles, name="Server Support")
+        await message.author.send(embed=embed)
+        # overwrite={
+        # message.author: discord.PermissionOverwrite(read_messages=True),
+        # guild.default_role: discord.PermissionOverwrite(read_messages=False)
+        # }
+        modmail_channel = await guild.create_text_channel(
+            name=format_name(author),
+            # overwrites=overwrite,
+            category=support_category,
+        )
 
-            await modmail_channel.send(
-                f"{support.mention}",
-                embed=self.format_info(message)
-            )
-            await self.send_mail(message, modmail_channel, mod=False)
+        await modmail_channel.edit(topic=topic)
+        support = discord.utils.get(guild.roles, name="Server Support")
+
+        await modmail_channel.send(
+            f"{support.mention}",
+            embed=format_info(guild, message)
+        )
+        await self.send_mail(message, modmail_channel, is_moderator=False)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -202,7 +201,7 @@ class Modmail(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def reply(self, ctx, *, message):
+    async def reply(self, ctx: commands.Context, *, message):
         """Reply to users using this command."""
 
         category = discord.utils.get(ctx.guild.categories, id=ctx.channel.category_id)
@@ -214,7 +213,7 @@ class Modmail(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def block(self, ctx, user=Union[discord.Member, int, str, None]):
+    async def block(self, ctx: commands.Context, user=Union[discord.Member, int, str, None]):
         """Block a user from using modmail."""
 
         if user is None and "User ID:" not in str(ctx.channel.topic):
@@ -243,7 +242,7 @@ class Modmail(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def unblock(self, ctx, user=Union[discord.Member, int, str, None]):
+    async def unblock(self, ctx: commands.Context, user=Union[discord.Member, int, str, None]):
         """Unblocks a user from using modmail."""
 
         if user is None and "User ID:" not in str(ctx.channel.topic):
@@ -272,7 +271,7 @@ class Modmail(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def help(self, ctx):
+    async def help(self, ctx: commands.Context):
         if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
             logs = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
             embed = command_embed(
