@@ -25,7 +25,6 @@ def format_info(guild: discord.Guild, message: discord.Message):
 
     user = message.author
     member = guild.get_member(user.id)
-    print(user, member)
     avatar_url = user.avatar_url
     color = 0
 

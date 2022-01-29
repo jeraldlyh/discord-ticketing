@@ -72,7 +72,7 @@ class Modmail(commands.Cog):
 
             if "User ID:" in channel_topic:
                 user_id = channel_topic.split(": ")[1]
-                user = self.get_user(user_id)
+                user = await self.fetch_user(user_id)
                 await user.send(embed=embed_message)
             await channel.delete()
         await support_category.delete()
@@ -93,12 +93,12 @@ class Modmail(commands.Cog):
             return await ctx.send(embed=embed)
 
         user_id = int(ctx.channel.topic.split(": ")[1])
-        user = self.bot.get_user(user_id)
+        user = await self.bot.fetch_user(user_id)
 
         log_channel = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
 
-        await log_channel.send(embed=close_modmail_embed(ctx.mail, is_log=True))
-        await user.send(embed=close_modmail_embed(ctx.author))
+        await log_channel.send(embed=close_modmail_embed(user.name, ctx.author, is_log=True))
+        await user.send(embed=close_modmail_embed(user.name, ctx.author))
         await ctx.channel.delete()
 
     async def send_mail(self, message: discord.Message, channel: Union[discord.TextChannel, discord.User], is_moderator: bool):
@@ -235,7 +235,7 @@ class Modmail(commands.Cog):
         topic += "\n" + id
 
         await bot_info_channel.edit(topic=topic)
-        member = self.get_user(id)
+        member = await self.fetch_user(id)
 
         embed = command_embed(description=f"Sucessfully blocked {member.mention}.")
         await ctx.send(embed=embed)
@@ -264,7 +264,7 @@ class Modmail(commands.Cog):
         topic = topic.replace("\n" + id, "")
 
         await bot_info_channel.edit(topic=topic)
-        member = self.get_user(id)
+        member = await self.fetch_user(id)
 
         embed = command_embed(description=f"Sucessfully unblocked {member.mention}.")
         return await ctx.send(embed=embed)
