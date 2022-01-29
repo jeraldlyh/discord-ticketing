@@ -1,13 +1,13 @@
-from distutils.log import error
 import os
+from typing import Union
 import discord
-import string
 import re
 
 from discord.ext import commands
 from urllib.parse import urlparse
 
-from cogs.utils.embed import command_embed
+from discord.errors import NotFound
+from cogs.utils.embed import command_embed, blocked_embed
 from cogs.utils.format import format_info, format_name
 
 
@@ -98,61 +98,55 @@ class Modmail(commands.Cog):
             print(e)
         await ctx.channel.delete()
 
-    async def send_mail(self, message, channel, mod):
+    async def send_mail(self, message: discord.Message, channel: Union[discord.TextChannel,discord.DMChannel], is_moderator: bool):
+        """Sends message to modmail channel for specific user"""
+
         author = message.author
-        fmt = discord.Embed()
-        fmt.description = message.content
-        fmt.timestamp = message.created_at
+        embed = discord.Embed()
+        embed.description = message.content
+        embed.timestamp = message.created_at
+        embed.set_author(name=str(author), icon_url=author.avatar_url)
         urls = re.findall(r"(https?://[^\s]+)", message.content)
 
         types = [".png", ".jpg", ".gif", ".jpeg", ".webp"]
 
-        for u in urls:
-            if any(urlparse(u).path.endswith(x) for x in types):
-                fmt.set_image(url=u)
+        for url in urls:
+            if any(urlparse(url).path.endswith(x) for x in types):
+                embed.set_image(url=url)
                 break
 
-        if mod:
-            fmt.color = discord.Color.green()
-            fmt.set_author(name=str(author), icon_url=author.avatar_url)
-            fmt.set_footer(text="Moderator")
+        if is_moderator:
+            embed.color = discord.Color.green()
+            embed.set_footer(text="Moderator")
         else:
-            fmt.color = discord.Color.gold()
-            fmt.set_author(name=str(author), icon_url=author.avatar_url)
-            fmt.set_footer(text="User")
-
-        embed = None
+            embed.color = discord.Color.gold()
+            embed.set_footer(text="User")
 
         if message.attachments:
-            fmt.set_image(url=message.attachments[0].url)
+            embed.set_image(url=message.attachments[0].url)
 
-        await channel.send(embed=fmt)
+        await channel.send(embed=embed)
 
-    async def process_reply(self, message):
+    async def process_reply(self, message: discord.Message):
         try:
             await message.delete()
-        except discord.errors.NotFound:
+        except NotFound:
             pass
-        await self.send_mail(message, message.channel, mod=True)
+
+        await self.send_mail(message, message.channel, is_moderator=True)
+
         user_id = int(message.channel.topic.split(": ")[1])
         user = self.bot.get_user(user_id)
-        await self.send_mail(message, user, mod=True)
 
-    
+        await self.send_mail(message, user, is_moderator=True)
 
-    def blocked_embed(self):
-        embed = discord.Embed(title="Message not processed!", color=discord.Color.red())
-        embed.description = "You have been blocked from using modmail."
-        return embed
-    
-    async def validate_blocked_user(self, message, guild, category):
+    async def validate_blocked_user(self, message, category):
         bot_info_channel = category.channels[0]  # By default, bot-info
         blocked = bot_info_channel.topic.split("Blocked\n-------")[1].strip().split("\n")
         blocked = [x.strip() for x in blocked]
 
         if str(message.author.id) in blocked:
-            return await message.author.send(embed=self.blocked_embed)
-
+            return await message.author.send(embed=blocked_embed)
 
     async def process_modmail(self, message: discord.Message):
         """Processes messages sent to the bot, creates a thread with requested user."""
@@ -161,7 +155,7 @@ class Modmail(commands.Cog):
 
         guild = discord.utils.get(self.bot.guilds, id=os.getenv("GUILD_ID"))
         support_category = discord.utils.get(guild.categories, name="📋 Support")
-        await self.validate_blocked_user(message, guild, support_category)
+        await self.validate_blocked_user(message, support_category)
         
         author = message.author
         topic = f"User ID: {author.id}"
@@ -204,62 +198,73 @@ class Modmail(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def reply(self, ctx, *, msg):
+    async def reply(self, ctx, *, message):
         """Reply to users using this command."""
-        categ = discord.utils.get(ctx.guild.categories, id=ctx.channel.category_id)
-        if categ is not None:
-            if categ.name == "📋 Support":
+
+        category = discord.utils.get(ctx.guild.categories, id=ctx.channel.category_id)
+        if category is not None:
+            if category.name == "📋 Support":
                 if "User ID:" in ctx.channel.topic:
-                    ctx.message.content = msg
+                    ctx.message.content = message
                     await self.process_reply(ctx.message)
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def block(self, ctx, id=None):
+    async def block(self, ctx, user=Union[discord.Member, int, str, None]):
         """Block a user from using modmail."""
-        if id is None:
-            if "User ID:" in str(ctx.channel.topic):
-                id = ctx.channel.topic.split("User ID: ")[1].strip()
-            else:
-                eembed = command_error(description="**No UserID provided.**")
-                return await ctx.send(embed=eembed)
 
-        categ = discord.utils.get(ctx.guild.categories, name="📋 Support")
-        top_chan = categ.channels[0]  # bot-info
-        topic = str(top_chan.topic)
-        topic += "\n" + id
-
-        if id not in top_chan.topic:
-            await top_chan.edit(topic=topic)
-            pembed = command_embed(description="**User sucessfully blocked.**")
-            await ctx.send(embed=pembed)
+        if user is None and "User ID:" not in str(ctx.channel.topic):
+            embed = command_embed(description="**Kindly provide a user ID or tag a user.**", error=True)
+            return await ctx.send(embed=embed)
+        elif isinstance(user, discord.Member):
+            id = user.id
         else:
-            eembed = command_error(description="**User is already blocked.**")
-            return await ctx.send(embed=eembed)
+            id = ctx.channel.topic.split("User ID: ")[1].strip() or user
+
+        category = discord.utils.get(ctx.guild.categories, name="📋 Support")
+        bot_info_channel = category.channels[0]  # bot-info
+
+        if id not in bot_info_channel.topic:
+            topic = str(bot_info_channel.topic)
+            topic += "\n" + id
+
+            await bot_info_channel.edit(topic=topic)
+            member = self.get_user(id)
+
+            embed = command_embed(description=f"**Sucessfully blocked {member.mention}.**")
+            await ctx.send(embed=embed)
+        else:
+            embed = command_embed(description="**User is already blocked.**", error=True)
+            return await ctx.send(embed=embed)
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def unblock(self, ctx, id=None):
+    async def unblock(self, ctx, user=Union[discord.Member, int, str, None]):
         """Unblocks a user from using modmail."""
-        if id is None:
-            if "User ID:" in str(ctx.channel.topic):
-                id = ctx.channel.topic.split("User ID: ")[1].strip()
-            else:
-                eembed = command_error(description="**No UserID provided.**")
-                return await ctx.send(embed=eembed)
 
-        categ = discord.utils.get(ctx.guild.categories, name="📋 Support")
-        top_chan = categ.channels[0]  # bot-info
-        topic = str(top_chan.topic)
-        topic = topic.replace("\n" + id, "")
-
-        if id in top_chan.topic:
-            await top_chan.edit(topic=topic)
-            pembed = command_embed(description="**User sucessfully unblocked.**")
-            await ctx.send(embed=pembed)
+        if user is None and "User ID:" not in str(ctx.channel.topic):
+            embed = command_embed(description="**Kindly provide a user ID or tag a user.**", error=True)
+            return await ctx.send(embed=embed)
+        elif isinstance(user, discord.Member):
+            id = user.id
         else:
-            eembed = command_error(description="**User is not already blocked.**")
-            return await ctx.send(embed=eembed)
+            id = ctx.channel.topic.split("User ID: ")[1].strip() or user
+
+        category = discord.utils.get(ctx.guild.categories, name="📋 Support")
+        bot_info_channel = category.channels[0]  # bot-info
+
+        if id in bot_info_channel.topic:
+            topic = str(bot_info_channel.topic)
+            topic = topic.replace("\n" + id, "")
+
+            await bot_info_channel.edit(topic=topic)
+            member = self.get_user(id)
+
+            embed = command_embed(description=f"**Sucessfully unblocked {member.mention}.**")
+            await ctx.send(embed=embed)
+        else:
+            embed = command_embed(description="**User is not already blocked.**", error=True)
+            return await ctx.send(embed=embed)
 
     @commands.command()
     @commands.has_any_role("Server Support")
