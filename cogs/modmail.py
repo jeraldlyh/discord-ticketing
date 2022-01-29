@@ -1,8 +1,8 @@
-import os
-from typing import Union
 import discord
 import re
+import config
 
+from typing import Union
 from discord.ext import commands
 from urllib.parse import urlparse
 from discord.errors import NotFound
@@ -29,7 +29,7 @@ class Modmail(commands.Cog):
                 }
                 category = await ctx.guild.create_category(name="📋 Support", overwrites=overwrite)
                 # await categ.edit(position=0)
-                channel = await ctx.guild.create_text_channel(name=os.getenv("LOGGING_CHANNEL"), category=category)
+                channel = await ctx.guild.create_text_channel(name=config.LOGGING_CHANNEL, category=category)
                 await channel.edit(topic="-block <userID> to block users.\n\n" "Blocked\n-------\n\n")
 
                 embed = command_embed(
@@ -45,11 +45,11 @@ class Modmail(commands.Cog):
     async def disable(self, ctx: commands.Context):
         """Close all threads and disable modmail."""
 
-        if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
-            logs_channel = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
+        if ctx.message.channel.name != config.LOGGING_CHANNEL:
+            logs_channel = discord.utils.get(ctx.message.guild.channels, name=config.LOGGING_CHANNEL)
 
             if logs_channel is None:
-                logs_channel = "#" + os.getenv("LOGGING_CHANNEL")
+                logs_channel = "#" + config.LOGGING_CHANNEL
             else:
                 logs_channel = logs_channel.mention
 
@@ -72,7 +72,7 @@ class Modmail(commands.Cog):
 
             if "User ID:" in channel_topic:
                 user_id = channel_topic.split(": ")[1]
-                user = await self.bot.fetch_user(user_id)
+                user = self.bot.get_user(user_id)
                 await user.send(embed=embed_message)
             await channel.delete()
         await support_category.delete()
@@ -93,9 +93,9 @@ class Modmail(commands.Cog):
             return await ctx.send(embed=embed)
 
         user_id = int(ctx.channel.topic.split(": ")[1])
-        user = await self.bot.fetch_user(user_id)
+        user = self.bot.get_user(user_id)
 
-        log_channel = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
+        log_channel = discord.utils.get(ctx.message.guild.channels, name=config.LOGGING_CHANNEL)
 
         await log_channel.send(embed=close_modmail_embed(user.name, ctx.author, is_log=True))
         await user.send(embed=close_modmail_embed(user.name, ctx.author))
@@ -139,7 +139,7 @@ class Modmail(commands.Cog):
         await self.send_mail(message, message.channel, is_moderator=True)
 
         user_id = int(message.channel.topic.split(": ")[1])
-        user = await self.bot.fetch_user(user_id)
+        user = self.bot.get_user(user_id)
 
         await self.send_mail(message, user, is_moderator=True)
 
@@ -156,7 +156,7 @@ class Modmail(commands.Cog):
 
         await message.add_reaction("✅")
 
-        guild = discord.utils.get(self.bot.guilds, id=int(os.getenv("GUILD_ID")))
+        guild = discord.utils.get(self.bot.guilds, id=int(config.GUILD_ID))
         support_category = discord.utils.get(guild.categories, name="📋 Support")
         await self.validate_blocked_user(message, support_category)
         
@@ -235,7 +235,7 @@ class Modmail(commands.Cog):
         topic += "\n" + id
 
         await bot_info_channel.edit(topic=topic)
-        member = await self.bot.fetch_user(id)
+        member = self.bot.get_user(id)
 
         embed = command_embed(description=f"Sucessfully blocked {member.mention}.")
         await ctx.send(embed=embed)
@@ -264,7 +264,7 @@ class Modmail(commands.Cog):
         topic = topic.replace("\n" + id, "")
 
         await bot_info_channel.edit(topic=topic)
-        member = await self.bot.fetch_user(id)
+        member = self.bot.get_user(id)
 
         embed = command_embed(description=f"Sucessfully unblocked {member.mention}.")
         return await ctx.send(embed=embed)
@@ -272,8 +272,8 @@ class Modmail(commands.Cog):
     @commands.command()
     @commands.has_any_role("Server Support")
     async def help(self, ctx: commands.Context):
-        if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
-            logs = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
+        if ctx.message.channel.name != config.LOGGING_CHANNEL:
+            logs = discord.utils.get(ctx.message.guild.channels, name=config.LOGGING_CHANNEL)
             embed = command_embed(
                 description=f"{ctx.message.author.mention} Commands can only be used in {logs.mention}",
                 error=True

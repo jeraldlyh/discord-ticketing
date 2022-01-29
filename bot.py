@@ -1,18 +1,21 @@
-import os
 import discord
 import pytz
 import datetime
+import firebase_admin
+import config
 
-from dotenv import load_dotenv
+from firebase_admin import credentials
 from discord.ext import commands
 
-load_dotenv()
-extensions = ["cogs.modmail", "cogs.error"]
+extensions = ["cogs.modmail"]#, "cogs.error"]
 
+credential = credentials.Certificate(config.FIREBASE_CREDENTIALS)
+firebase_admin.initialize_app(credential)
 
-bot = commands.Bot(command_prefix="-")
+intents = discord.Intents.default()
+intents.members = True
+bot = commands.Bot(command_prefix="-", intents=intents)
 bot.remove_command("help")
-
 
 @bot.event
 async def on_ready():
@@ -33,4 +36,4 @@ if __name__ == "__main__":
             print(e)
 
 
-bot.run(os.getenv("BOT_TOKEN"))
+bot.run(config.BOT_TOKEN)
