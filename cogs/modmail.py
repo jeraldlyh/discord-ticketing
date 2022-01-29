@@ -8,6 +8,7 @@ from discord.ext import commands
 from urllib.parse import urlparse
 
 from cogs.utils.embed import command_embed
+from cogs.utils.format import format_info, format_name
 
 
 class Modmail(commands.Cog):
@@ -97,37 +98,6 @@ class Modmail(commands.Cog):
             print(e)
         await ctx.channel.delete()
 
-    def format_info(self, message: discord.Message):
-        """Retrieves information about a member of a guild"""
-
-        user = message.author
-        guild = discord.utils.get(self.bot.guilds, id=os.getenv("GUILD_ID"))
-        member = guild.get_member(user.id)
-        avatar_url = user.avatar_url
-        color = 0
-
-        if member:
-            roles = sorted(member.roles, key=lambda r: r.position)
-            role_names = (", ".join([r.name for r in roles if r.name != "@everyone"]) or "None")
-            member_number = (sorted(guild.members, key=lambda m: m.joined_at).index(member) + 1)
-
-            for role in roles:
-                if str(role.color) != "#000000":
-                    color = role.color
-
-        embed = discord.Embed(colour=color, description="Modmail thread started.")
-        embed.set_thumbnail(url=avatar_url)
-        embed.set_author(name=user, icon_url=guild.icon_url)
-
-        if member:
-            embed.add_field(name="Member No.", value=str(member_number), inline=True)
-            embed.add_field(name="Nickname", value=member.mention, inline=True)
-            embed.add_field(name="Roles", value=role_names, inline=True)
-        else:
-            embed.add_field(name="Something went wrong", value="Unable to retrieve information about user in server")
-
-        return embed
-
     async def send_mail(self, message, channel, mod):
         author = message.author
         fmt = discord.Embed()
@@ -168,21 +138,7 @@ class Modmail(commands.Cog):
         user = self.bot.get_user(user_id)
         await self.send_mail(message, user, mod=True)
 
-    def format_name(self, author: discord.abc.User):
-        """Remove readable ASCII characters"""
-
-        name = author.name
-        updated_name = ""
-
-        for letter in name:
-            if letter in string.ascii_letters + string.digits:
-                updated_name += letter
-
-        if not updated_name:
-            updated_name = "null"
-
-        updated_name += f" - {author.discriminator}"
-        return updated_name
+    
 
     def blocked_embed(self):
         embed = discord.Embed(title="Message not processed!", color=discord.Color.red())
@@ -223,19 +179,20 @@ class Modmail(commands.Cog):
             # message.author: discord.PermissionOverwrite(read_messages=True),
             # guild.default_role: discord.PermissionOverwrite(read_messages=False)
             # }
-            channel = await guild.create_text_channel(
+            modmail_channel = await guild.create_text_channel(
                 name=self.format_name(author),
                 # overwrites=overwrite,
                 category=support_category,
             )
 
-            await channel.edit(topic=topic)
+            await modmail_channel.edit(topic=topic)
             support = discord.utils.get(guild.roles, name="Server Support")
-            await channel.send(
+
+            await modmail_channel.send(
                 f"{support.mention}",
                 embed=self.format_info(message)
             )
-            await self.send_mail(message, channel, mod=False)
+            await self.send_mail(message, modmail_channel, mod=False)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
