@@ -170,43 +170,48 @@ class Modmail(commands.Cog):
         user = self.bot.get_user(user_id)
         await self.send_mail(message, user, mod=True)
 
-    def format_name(self, author):
+    def format_name(self, author: discord.abc.User):
+        """Remove readable ASCII characters"""
+
         name = author.name
-        new_name = ""
+        updated_name = ""
+
         for letter in name:
             if letter in string.ascii_letters + string.digits:
-                new_name += letter
-        if not new_name:
-            new_name = "null"
-        new_name += f"-{author.discriminator}"
-        return new_name
+                updated_name += letter
 
-    @property
+        if not updated_name:
+            updated_name = "null"
+
+        updated_name += f" - {author.discriminator}"
+        return updated_name
+
     def blocked_embed(self):
         embed = discord.Embed(title="Message not processed!", color=discord.Color.red())
         embed.description = "You have been blocked from using modmail."
         return embed
     
-    def validate_user(self, message):
-
-
-    async def process_modmail(self, message):
-        """Processes messages sent to the bot, creates a thread with requested user."""
-
-        await message.add_reaction("✅")
-
-        guild = discord.utils.get(self.bot.guilds, id=os.getenv("GUILD_ID"))
-        author = message.author
-        topic = f"User ID: {author.id}"
-        channel = discord.utils.get(guild.text_channels, topic=topic)
-        support_category = discord.utils.get(guild.categories, name="📋 Support")
-        bot_info_channel = support_category.channels[0]  # By default, bot-info
-
+    async def validate_blocked_user(self, message, guild, category):
+        bot_info_channel = category.channels[0]  # By default, bot-info
         blocked = bot_info_channel.topic.split("Blocked\n-------")[1].strip().split("\n")
         blocked = [x.strip() for x in blocked]
 
         if str(message.author.id) in blocked:
             return await message.author.send(embed=self.blocked_embed)
+
+
+    async def process_modmail(self, message: discord.Message):
+        """Processes messages sent to the bot, creates a thread with requested user."""
+
+        await message.add_reaction("✅")
+
+        guild = discord.utils.get(self.bot.guilds, id=os.getenv("GUILD_ID"))
+        support_category = discord.utils.get(guild.categories, name="📋 Support")
+        await self.validate_blocked_user(message, guild, support_category)
+        
+        author = message.author
+        topic = f"User ID: {author.id}"
+        channel = discord.utils.get(guild.text_channels, topic=topic)
 
         embed = discord.Embed(title="Thanks for the message!")
         embed.description = "The moderation team will get back to you as soon as possible!"
@@ -215,7 +220,7 @@ class Modmail(commands.Cog):
         if channel is not None:
             await self.send_mail(message, channel, mod=False)
         else:
-            await message.author.send(embed=em)
+            await message.author.send(embed=embed)
             # overwrite={
             # message.author: discord.PermissionOverwrite(read_messages=True),
             # guild.default_role: discord.PermissionOverwrite(read_messages=False)
@@ -223,17 +228,19 @@ class Modmail(commands.Cog):
             channel = await guild.create_text_channel(
                 name=self.format_name(author),
                 # overwrites=overwrite,
-                category=categ,
+                category=support_category,
             )
+
             await channel.edit(topic=topic)
             support = discord.utils.get(guild.roles, name="Server Support")
             await channel.send(
-                "{0}".format(support.mention), embed=self.format_info(message)
+                f"{support.mention}",
+                embed=self.format_info(message)
             )
             await self.send_mail(message, channel, mod=False)
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         if message.author.bot:
             return
 
