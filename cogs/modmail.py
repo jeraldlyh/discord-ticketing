@@ -101,7 +101,7 @@ class Modmail(commands.Cog):
         await user.send(embed=close_modmail_embed(ctx.author))
         await ctx.channel.delete()
 
-    async def send_mail(self, message: discord.Message, channel: Union[discord.TextChannel,discord.DMChannel], is_moderator: bool):
+    async def send_mail(self, message: discord.Message, channel: Union[discord.TextChannel, discord.User], is_moderator: bool):
         """Sends message to modmail channel for specific user"""
 
         author = message.author
@@ -139,7 +139,7 @@ class Modmail(commands.Cog):
         await self.send_mail(message, message.channel, is_moderator=True)
 
         user_id = int(message.channel.topic.split(": ")[1])
-        user = self.bot.get_user(user_id)
+        user = await self.bot.fetch_user(user_id)
 
         await self.send_mail(message, user, is_moderator=True)
 
