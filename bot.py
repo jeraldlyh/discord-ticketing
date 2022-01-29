@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 
 load_dotenv()
-extensions = ["cogs.modmail"]
+extensions = ["cogs.modmail", "cogs.error"]
 
 
 bot = commands.Bot(command_prefix="-")
