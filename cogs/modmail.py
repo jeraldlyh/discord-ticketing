@@ -72,7 +72,7 @@ class Modmail(commands.Cog):
 
             if "User ID:" in channel_topic:
                 user_id = channel_topic.split(": ")[1]
-                user = await self.fetch_user(user_id)
+                user = await self.bot.fetch_user(user_id)
                 await user.send(embed=embed_message)
             await channel.delete()
         await support_category.delete()
@@ -213,16 +213,16 @@ class Modmail(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def block(self, ctx: commands.Context, user=Union[discord.Member, int, str, None]):
+    async def block(self, ctx: commands.Context, user):
         """Block a user from using modmail."""
 
         if user is None and "User ID:" not in str(ctx.channel.topic):
             embed = command_embed(description="Kindly provide a user ID or tag a user.", error=True)
             return await ctx.send(embed=embed)
-        elif isinstance(user, discord.Member):
-            id = user.id
+        elif "<@!" in user: # Checks for user mention
+            id = user[3:-1]
         else:
-            id = ctx.channel.topic.split("User ID: ")[1].strip() or user
+            id = ctx.channel.topic.split("User ID: ")[1].strip()
 
         category = discord.utils.get(ctx.guild.categories, name="📋 Support")
         bot_info_channel = category.channels[0]  # bot-info
@@ -235,21 +235,21 @@ class Modmail(commands.Cog):
         topic += "\n" + id
 
         await bot_info_channel.edit(topic=topic)
-        member = await self.fetch_user(id)
+        member = await self.bot.fetch_user(id)
 
         embed = command_embed(description=f"Sucessfully blocked {member.mention}.")
         await ctx.send(embed=embed)
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def unblock(self, ctx: commands.Context, user=Union[discord.Member, int, str, None]):
+    async def unblock(self, ctx: commands.Context, user):
         """Unblocks a user from using modmail."""
 
         if user is None and "User ID:" not in str(ctx.channel.topic):
             embed = command_embed(description="Kindly provide a user ID or tag a user.", error=True)
             return await ctx.send(embed=embed)
-        elif isinstance(user, discord.Member):
-            id = user.id
+        elif "<@!" in user: # Checks for user mention
+            id = user[3:-1]
         else:
             id = ctx.channel.topic.split("User ID: ")[1].strip() or user
 
@@ -264,7 +264,7 @@ class Modmail(commands.Cog):
         topic = topic.replace("\n" + id, "")
 
         await bot_info_channel.edit(topic=topic)
-        member = await self.fetch_user(id)
+        member = await self.bot.fetch_user(id)
 
         embed = command_embed(description=f"Sucessfully unblocked {member.mention}.")
         return await ctx.send(embed=embed)
