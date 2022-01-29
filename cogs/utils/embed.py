@@ -19,3 +19,12 @@ def blocked_embed():
     embed = discord.Embed(title="Message not processed!", color=discord.Color.red())
     embed.description = "You have been blocked from using modmail."
     return embed
+
+
+def close_modmail_embed(name, is_log=False):
+    title = f"{name}'s Thread Closed" if is_log else "Thread Closed"
+
+    embed = discord.Embed(title=title)
+    embed.description = f"{name} has closed this modmail session."
+    embed.color = discord.Color.red() if is_log else discord.Color(0xFFD700)
+    return embed
