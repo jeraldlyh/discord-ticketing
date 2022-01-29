@@ -29,7 +29,7 @@ class Modmail(commands.Cog):
                 }
                 category = await ctx.guild.create_category(name="📋 Support", overwrites=overwrite)
                 # await categ.edit(position=0)
-                channel = await ctx.guild.create_text_channel(name="mail-logs", category=category)
+                channel = await ctx.guild.create_text_channel(name=os.getenv("LOGGING_CHANNEL"), category=category)
                 await channel.edit(topic="-block <userID> to block users.\n\n" "Blocked\n-------\n\n")
 
                 embed = command_embed(
@@ -45,10 +45,16 @@ class Modmail(commands.Cog):
     async def disable(self, ctx):
         """Close all threads and disable modmail."""
 
-        if ctx.message.channel.name != "mail-logs":
-            logs_channel = discord.utils.get(ctx.message.guild.channels, name="mail-logs")
+        if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
+            logs_channel = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
+
+            if logs_channel is None:
+                logs_channel = "#" + os.getenv("LOGGING_CHANNEL")
+            else:
+                logs_channel = logs_channel.mention
+
             embed = command_embed(
-                description=f"**{ctx.message.author.mention} Commands can only be used in {logs_channel.mention}**"
+                description=f"**{ctx.message.author.mention} Commands can only be used in {logs_channel}**"
             )
             return await ctx.send(embed=embed)
     
@@ -61,16 +67,21 @@ class Modmail(commands.Cog):
         embed_message.description = "**{ctx.author}** has closed this modmail session."
         embed_message.color = discord.Color.red()
 
-        for channel in  support_category.text_channels():
-            channel_topic = channel.topic
+        for channel in support_category.text_channels:
+            channel_topic = str(channel.topic)
+
             if "User ID:" in channel_topic:
                 user_id = channel_topic.split(": ")[1]
                 user = self.get_user(user_id)
                 await user.send(embed=embed_message)
             await channel.delete()
         await support_category.delete()
-        embed = command_embed(description="**Disabled Modmail.**")
-        await ctx.send(embed=embed)
+
+        try:
+            embed = command_embed(description="**Disabled Modmail.**")
+            await ctx.send(embed=embed)
+        except NotFound as e:
+            pass
 
     @commands.command(name="close")
     @commands.has_any_role("Server Support")
@@ -86,7 +97,7 @@ class Modmail(commands.Cog):
         em.description = "**{0}** has closed this modmail session.".format(ctx.author)
         em.color = discord.Color.red()
         try:
-            logs = discord.utils.get(ctx.message.guild.channels, name="mail-logs")
+            logs = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
             log_em = discord.Embed(title="{0}'s Thread Closed".format(user))
             log_em.color = discord.Color(0xFFD700)
             log_em.description = "**{0}** has closed this modmail session.".format(
@@ -224,18 +235,18 @@ class Modmail(commands.Cog):
         category = discord.utils.get(ctx.guild.categories, name="📋 Support")
         bot_info_channel = category.channels[0]  # bot-info
 
-        if id not in bot_info_channel.topic:
-            topic = str(bot_info_channel.topic)
-            topic += "\n" + id
-
-            await bot_info_channel.edit(topic=topic)
-            member = self.get_user(id)
-
-            embed = command_embed(description=f"**Sucessfully blocked {member.mention}.**")
-            await ctx.send(embed=embed)
-        else:
+        if id in bot_info_channel.topic:
             embed = command_embed(description="**User is already blocked.**", error=True)
             return await ctx.send(embed=embed)
+
+        topic = str(bot_info_channel.topic)
+        topic += "\n" + id
+
+        await bot_info_channel.edit(topic=topic)
+        member = self.get_user(id)
+
+        embed = command_embed(description=f"**Sucessfully blocked {member.mention}.**")
+        await ctx.send(embed=embed)
 
     @commands.command()
     @commands.has_any_role("Server Support")
@@ -253,37 +264,36 @@ class Modmail(commands.Cog):
         category = discord.utils.get(ctx.guild.categories, name="📋 Support")
         bot_info_channel = category.channels[0]  # bot-info
 
-        if id in bot_info_channel.topic:
-            topic = str(bot_info_channel.topic)
-            topic = topic.replace("\n" + id, "")
-
-            await bot_info_channel.edit(topic=topic)
-            member = self.get_user(id)
-
-            embed = command_embed(description=f"**Sucessfully unblocked {member.mention}.**")
-            await ctx.send(embed=embed)
-        else:
+        if id not in bot_info_channel.topic:
             embed = command_embed(description="**User is not already blocked.**", error=True)
             return await ctx.send(embed=embed)
+
+        topic = str(bot_info_channel.topic)
+        topic = topic.replace("\n" + id, "")
+
+        await bot_info_channel.edit(topic=topic)
+        member = self.get_user(id)
+
+        embed = command_embed(description=f"**Sucessfully unblocked {member.mention}.**")
+        return await ctx.send(embed=embed)
 
     @commands.command()
     @commands.has_any_role("Server Support")
     async def help(self, ctx):
-        if ctx.message.channel.name != "mail-logs":
-            logs = discord.utils.get(ctx.message.guild.channels, name="mail-logs")
-            eembed = command_error(
-                description="**{0} Commands can only be used in {1}**".format(
-                    ctx.message.author.mention, logs.mention
-                )
+        if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
+            logs = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
+            embed = command_embed(
+                description=f"**{ctx.message.author.mention} Commands can only be used in {logs.mention}**",
+                error=True
             )
-            return await ctx.send(embed=eembed)
-        else:
-            embed = discord.Embed(
-                title="Available Commands",
-                description="**-reply** - Replies a support ticket\n **-close** - Closes a support ticket",
-                color=0xA53636,
-            )
-            await ctx.send(embed=embed)
+            return await ctx.send(embed=embed)
+        
+        embed = discord.Embed(
+            title="Available Commands",
+            color=0xA53636,
+        )
+        embed.description=("\n".join([command for command in self.bot.commands]))
+        await ctx.send(embed=embed)
 
 
 # Adding the cog to main script
