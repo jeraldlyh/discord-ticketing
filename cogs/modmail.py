@@ -97,38 +97,36 @@ class Modmail(commands.Cog):
             print(e)
         await ctx.channel.delete()
 
-    def format_info(self, message):
-        """Get information about a member of a server
-        supports users from the guild or not."""
+    def format_info(self, message: discord.Message):
+        """Retrieves information about a member of a guild"""
+
         user = message.author
-        server = discord.utils.get(self.bot.guilds, id=376595440734306306)
-        member = server.get_member(user.id)
-        avi = user.avatar_url
-        desc = "Modmail thread started."
+        guild = discord.utils.get(self.bot.guilds, id=os.getenv("GUILD_ID"))
+        member = guild.get_member(user.id)
+        avatar_url = user.avatar_url
         color = 0
 
         if member:
-            roles = sorted(member.roles, key=lambda c: c.position)
-            rolenames = (
-                ", ".join([r.name for r in roles if r.name != "@everyone"]) or "None"
-            )
-            member_number = (
-                sorted(server.members, key=lambda m: m.joined_at).index(member) + 1
-            )
+            roles = sorted(member.roles, key=lambda r: r.position)
+            role_names = (", ".join([r.name for r in roles if r.name != "@everyone"]) or "None")
+            member_number = (sorted(guild.members, key=lambda m: m.joined_at).index(member) + 1)
+
             for role in roles:
                 if str(role.color) != "#000000":
                     color = role.color
 
-        em = discord.Embed(colour=color, description=desc)
-        em.set_thumbnail(url=avi)
-        em.set_author(name=user, icon_url=server.icon_url)
+        embed = discord.Embed(colour=color, description="Modmail thread started.")
+        embed.set_thumbnail(url=avatar_url)
+        embed.set_author(name=user, icon_url=guild.icon_url)
 
         if member:
-            em.add_field(name="Member No.", value=str(member_number), inline=True)
-            em.add_field(name="Nickname", value=member.mention, inline=True)
-            em.add_field(name="Roles", value=rolenames, inline=True)
+            embed.add_field(name="Member No.", value=str(member_number), inline=True)
+            embed.add_field(name="Nickname", value=member.mention, inline=True)
+            embed.add_field(name="Roles", value=role_names, inline=True)
+        else:
+            embed.add_field(name="Something went wrong", value="Unable to retrieve information about user in server")
 
-        return em
+        return embed
 
     async def send_mail(self, message, channel, mod):
         author = message.author
