@@ -1,4 +1,7 @@
 import discord
+import datetime
+
+from typing import Union
 
 
 def command_embed(description="", error=False):
@@ -21,12 +24,13 @@ def blocked_embed():
     return embed
 
 
-def close_modmail_embed(user, moderator, is_log=False):
+def close_modmail_embed(user: str, moderator: Union[discord.User, discord.Member], timestamp: datetime.datetime, is_log=False):
     title = f"{user}'s Thread Closed" if is_log else "Thread Closed"
 
     embed = discord.Embed(title=title)
     embed.description = f"{moderator} has closed this modmail session."
     embed.color = discord.Color.red() if is_log else discord.Color(0xFFD700)
+    embed.timestamp = timestamp
     return embed
 
 def insufficient_points_embed(user: discord.Member):

@@ -97,8 +97,8 @@ class Modmail(commands.Cog):
 
         log_channel = discord.utils.get(ctx.message.guild.channels, name=config.LOGGING_CHANNEL)
 
-        await log_channel.send(embed=close_modmail_embed(user.name, ctx.author, is_log=True))
-        await user.send(embed=close_modmail_embed(user.name, ctx.author))
+        await log_channel.send(embed=close_modmail_embed(user.name, ctx.author, ctx.message.created_at, is_log=True))
+        await user.send(embed=close_modmail_embed(user.name, ctx.author, ctx.message.created_at))
         await ctx.channel.delete()
 
     async def send_mail(self, message: discord.Message, channel: Union[discord.TextChannel, discord.User], is_moderator: bool):
