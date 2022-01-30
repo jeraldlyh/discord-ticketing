@@ -65,6 +65,43 @@ class Score(commands.Cog):
 
         embed.description=("\n".join([str(command) + " - " + str(command.help) for command in self.bot.commands]))
         await ctx.send(embed=embed)
+    
+    @commands.command()
+    async def list(self, ctx: commands.Context):
+        user_data = await self.firestore.get_all_users()
+        field_value_count = 0
+        username_value = ""
+        points_value = ""
+        index = 0
+
+        while (index < len(user_data)):
+            user = user_data[index]
+            username = str(user["username"])
+            points = str(user["points"])
+
+            field_value_count += max(len(username), len(points))
+
+            # Reset if it exceeds embed field value limit of 1024 characters
+            if (field_value_count >= 1000):
+                self.send_scoreboard(ctx, username_value, points_value)
+                username_value = ""
+                points_value = ""
+                index -= 1
+
+            username_value += username
+            points_value += points
+            index += 1
+
+        # Send leftover buffer
+        await self.send_scoreboard(ctx, username_value, points_value)
+    
+    async def send_scoreboard(self, ctx: commands.Context, usernames, points):
+        embed = discord.Embed(title="Scoreboard")
+
+        embed.add_field(name="Username", value=usernames, inline=True)
+        embed.add_field(name="Points", value=points, inline=True)
+        return await ctx.send(embed=embed)
+
 
 
 # Adding the cog to main script

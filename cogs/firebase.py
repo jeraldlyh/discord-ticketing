@@ -53,3 +53,16 @@ class Firestore():
         await doc_ref.update({
             "is_blocked": is_blocked
         })
+    
+    async def get_all_users(self):
+        docs = self.db.collection(self.USER_COLLECTION).stream()
+        result = []
+
+        async for doc in docs:
+            data = doc.to_dict()
+            data["username"] = doc.id
+            result.append(data)
+
+        return sorted(result, key=lambda x: x["points"])
+
+
