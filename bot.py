@@ -5,17 +5,19 @@ import datetime
 import firebase_admin
 import config
 
-from firebase_admin import credentials
+from dotenv import load_dotenv
 from discord.ext import commands
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="./whitehacks-key.json"
-extensions = ["cogs.modmail", "cogs.score"]#, "cogs.error"]
 
-credential = credentials.Certificate(config.FIREBASE_CREDENTIALS)
-firebase_admin.initialize_app(credential)
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="./google-credentials.json"
+load_dotenv()
+firebase_admin.initialize_app()
+
+extensions = ["cogs.modmail", "cogs.score", "cogs.error"]
 
 intents = discord.Intents.default()
 intents.members = True
+
 bot = commands.Bot(command_prefix="-", intents=intents)
 bot.remove_command("help")
 
@@ -38,4 +40,4 @@ if __name__ == "__main__":
             print(e)
 
 
-bot.run(config.BOT_TOKEN)
+bot.run(os.getenv("BOT_TOKEN"))
