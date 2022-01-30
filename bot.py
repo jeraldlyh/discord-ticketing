@@ -3,7 +3,6 @@ import discord
 import pytz
 import datetime
 import firebase_admin
-import config
 
 from dotenv import load_dotenv
 from discord.ext import commands
