@@ -269,24 +269,6 @@ class Modmail(commands.Cog):
         embed = command_embed(description=f"Sucessfully unblocked {member.mention}.")
         return await ctx.send(embed=embed)
 
-    @commands.command()
-    @commands.has_any_role("Server Support")
-    async def help(self, ctx: commands.Context):
-        if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
-            logs = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
-            embed = command_embed(
-                description=f"{ctx.message.author.mention} Commands can only be used in {logs.mention}",
-                error=True
-            )
-            return await ctx.send(embed=embed)
-        
-        embed = discord.Embed(
-            title="Available Commands",
-            color=0xA53636,
-        )
-        embed.description=("\n".join([command for command in self.bot.commands]))
-        await ctx.send(embed=embed)
-
 
 # Adding the cog to main script
 def setup(bot):

@@ -1,4 +1,5 @@
 import discord
+import os
 
 from discord.ext import commands
 from cogs.utils.embed import command_embed, insufficient_points_embed
@@ -10,6 +11,7 @@ class Score(commands.Cog):
         self.bot = bot
         self.firestore = Firestore()
 
+    @commands.has_any_role("Sponsor")
     @commands.command()
     async def add(self, ctx: commands.Context, user: discord.Member):
         username = user.name
@@ -24,6 +26,7 @@ class Score(commands.Cog):
         )
         return await ctx.send(embed=embed)
 
+    @commands.has_any_role("Sponsor")
     @commands.command()
     async def minus(self, ctx: commands.Context, user: discord.Member):
         try:
@@ -41,6 +44,27 @@ class Score(commands.Cog):
             return await ctx.send(embed=embed)
         except ValueError:
             return await ctx.send(embed=insufficient_points_embed(user))
+    
+    @commands.command()
+    @commands.has_any_role("Server Support")
+    async def help(self, ctx: commands.Context):
+        if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
+            logs = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
+            embed = command_embed(
+                description=f"{ctx.message.author.mention} Commands can only be used in {logs.mention}",
+                error=True
+            )
+            return await ctx.send(embed=embed)
+        
+        embed = discord.Embed(
+            title="Available Commands",
+            color=0xA53636,
+        )
+        for command in self.bot.commands:
+            print(command, command.help, command.name)
+
+        embed.description=("\n".join([str(command) + " - " + str(command.help) for command in self.bot.commands]))
+        await ctx.send(embed=embed)
 
 
 # Adding the cog to main script

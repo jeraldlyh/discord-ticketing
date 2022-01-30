@@ -12,8 +12,6 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="./google-credentials.json"
 load_dotenv()
 firebase_admin.initialize_app()
 
-extensions = ["cogs.modmail", "cogs.score", "cogs.error"]
-
 intents = discord.Intents.default()
 intents.members = True
 
@@ -31,10 +29,12 @@ async def on_ready():
 
 
 if __name__ == "__main__":
-    for extension in extensions:
+    for filename in os.listdir("./cogs"):
         try:
-            bot.load_extension(extension)
-            print("Loaded {0}".format(extension))
+            if filename.endswith(".py") and not "firebase" in filename:
+                cog = f"cogs.{filename[:-3]}"
+                bot.load_extension(cog)
+                print(f"Loaded {cog}")
         except Exception as e:
             print(e)
 
