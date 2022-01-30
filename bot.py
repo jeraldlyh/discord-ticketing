@@ -1,3 +1,4 @@
+import os
 import discord
 import pytz
 import datetime
@@ -7,7 +8,8 @@ import config
 from firebase_admin import credentials
 from discord.ext import commands
 
-extensions = ["cogs.modmail"]#, "cogs.error"]
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="./whitehacks-key.json"
+extensions = ["cogs.modmail", "cogs.score"]#, "cogs.error"]
 
 credential = credentials.Certificate(config.FIREBASE_CREDENTIALS)
 firebase_admin.initialize_app(credential)
