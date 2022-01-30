@@ -28,3 +28,8 @@ def close_modmail_embed(user, moderator, is_log=False):
     embed.description = f"{moderator} has closed this modmail session."
     embed.color = discord.Color.red() if is_log else discord.Color(0xFFD700)
     return embed
+
+def insufficient_points_embed(user: discord.Member):
+    embed = command_embed(description=f"{user.mention} does not have sufficient points", error=True)
+
+    return embed
