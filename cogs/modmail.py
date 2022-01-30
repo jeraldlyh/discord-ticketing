@@ -6,6 +6,7 @@ from typing import Union
 from discord.ext import commands
 from urllib.parse import urlparse
 from discord.errors import NotFound
+from cogs.firebase import Firestore
 from cogs.utils.embed import command_embed, blocked_embed, close_modmail_embed
 from cogs.utils.format import format_info, format_name
 
@@ -13,6 +14,7 @@ from cogs.utils.format import format_info, format_name
 class Modmail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.firestore = Firestore()
 
     @commands.command()
     async def setup(self, ctx: commands.Context):
@@ -213,60 +215,20 @@ class Modmail(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def block(self, ctx: commands.Context, user):
+    async def block(self, ctx: commands.Context, user: discord.Member):
         """Block a user from using modmail."""
 
-        if user is None and "User ID:" not in str(ctx.channel.topic):
-            embed = command_embed(description="Kindly provide a user ID or tag a user.", error=True)
-            return await ctx.send(embed=embed)
-        elif "<@!" in user: # Checks for user mention
-            id = user[3:-1]
-        else:
-            id = ctx.channel.topic.split("User ID: ")[1].strip()
-
-        category = discord.utils.get(ctx.guild.categories, name="📋 Support")
-        bot_info_channel = category.channels[0]  # bot-info
-
-        if id in bot_info_channel.topic:
-            embed = command_embed(description="User is already blocked.", error=True)
-            return await ctx.send(embed=embed)
-
-        topic = str(bot_info_channel.topic)
-        topic += "\n" + id
-
-        await bot_info_channel.edit(topic=topic)
-        member = self.bot.get_user(id)
-
-        embed = command_embed(description=f"Sucessfully blocked {member.mention}.")
+        await self.firestore.block_user(user.name, is_blocked=True)
+        embed = command_embed(description=f"Sucessfully blocked {user.mention}")
         await ctx.send(embed=embed)
 
     @commands.command()
     @commands.has_any_role("Server Support")
-    async def unblock(self, ctx: commands.Context, user):
+    async def unblock(self, ctx: commands.Context, user: discord.Member):
         """Unblocks a user from using modmail."""
 
-        if user is None and "User ID:" not in str(ctx.channel.topic):
-            embed = command_embed(description="Kindly provide a user ID or tag a user.", error=True)
-            return await ctx.send(embed=embed)
-        elif "<@!" in user: # Checks for user mention
-            id = user[3:-1]
-        else:
-            id = ctx.channel.topic.split("User ID: ")[1].strip() or user
-
-        category = discord.utils.get(ctx.guild.categories, name="📋 Support")
-        bot_info_channel = category.channels[0]  # bot-info
-
-        if id not in bot_info_channel.topic:
-            embed = command_embed(description="User is not already blocked.", error=True)
-            return await ctx.send(embed=embed)
-
-        topic = str(bot_info_channel.topic)
-        topic = topic.replace("\n" + id, "")
-
-        await bot_info_channel.edit(topic=topic)
-        member = self.bot.get_user(id)
-
-        embed = command_embed(description=f"Sucessfully unblocked {member.mention}.")
+        await self.firestore.block_user(user.name)
+        embed = command_embed(description=f"Sucessfully unblocked {user.mention}")
         return await ctx.send(embed=embed)
 
 
