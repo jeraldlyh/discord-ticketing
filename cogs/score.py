@@ -44,7 +44,7 @@ class Score(commands.Cog):
             return await ctx.send(embed=embed)
         except ValueError:
             return await ctx.send(embed=insufficient_points_embed(user))
-    
+
     @commands.command()
     @commands.has_any_role("Server Support")
     async def help(self, ctx: commands.Context):
@@ -65,8 +65,9 @@ class Score(commands.Cog):
 
         embed.description=("\n".join([str(command) + " - " + str(command.help) for command in self.bot.commands]))
         await ctx.send(embed=embed)
-    
+
     @commands.command()
+    @commands.has_any_role("Server Support")
     async def list(self, ctx: commands.Context):
         user_data = await self.firestore.get_all_users()
         field_value_count = 0
