@@ -13,22 +13,26 @@ class Score(commands.Cog):
 
     @commands.has_any_role("Sponsor")
     @commands.command()
-    async def add(self, ctx: commands.Context, user: discord.Member):
-        username = user.name
-        is_user_exist = await self.firestore.is_user_exist(username)
+    async def add(self, ctx: commands.Context, user: discord.Member, points: int = 1):
+        try:
+            username = user.name
+            is_user_exist = await self.firestore.is_user_exist(username)
 
-        if not is_user_exist:
-            await self.firestore.create_user(username)
-        
-        await self.firestore.add_points(username)
-        embed = command_embed(
-            description=f"Successfully added 1 point to {user.mention}"
-        )
-        return await ctx.send(embed=embed)
+            if not is_user_exist:
+                await self.firestore.create_user(username)
+            
+            await self.firestore.add_points(username, points)
+            embed = command_embed(
+                description=f"Successfully added {points} point to {user.mention}"
+            )
+            return await ctx.send(embed=embed)
+        except SyntaxError as e:
+            embed = command_embed(description=str(e), error=True)
+            return await ctx.send(embed=embed)
 
     @commands.has_any_role("Sponsor")
     @commands.command()
-    async def minus(self, ctx: commands.Context, user: discord.Member):
+    async def minus(self, ctx: commands.Context, user: discord.Member, points: int = 1):
         try:
             username = user.name
             is_user_exist = await self.firestore.is_user_exist(username)
@@ -37,13 +41,16 @@ class Score(commands.Cog):
                 await self.firestore.create_user(username)
                 return await ctx.send(embed=insufficient_points_embed(user))
 
-            await self.firestore.minus_points(username)
+            await self.firestore.minus_points(username, points)
             embed = command_embed(
-                description=f"Successfully deducted 1 point from {user.mention}"
+                description=f"Successfully deducted {points} point from {user.mention}"
             )
             return await ctx.send(embed=embed)
         except ValueError:
             return await ctx.send(embed=insufficient_points_embed(user))
+        except SyntaxError as e:
+            embed = command_embed(description=str(e), error=True)
+            return await ctx.send(embed=embed)
 
     @commands.command()
     @commands.has_any_role("Server Support")

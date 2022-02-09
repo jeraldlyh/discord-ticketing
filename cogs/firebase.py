@@ -33,21 +33,27 @@ class Firestore():
         doc_ref = self.get_user_doc_ref(username)
         await doc_ref.set(DEFAULT_PROFILE)
 
-    async def add_points(self, username: str):
+    async def add_points(self, username: str, points: int):
+        if (points < 1 or points > 5):
+            raise SyntaxError("Points must be within 1 to 5")
+
         doc_ref = self.get_user_doc_ref(username)
         await doc_ref.update({
-            "points": firestore.Increment(1),
+            "points": firestore.Increment(points),
             "last_updated": firestore.SERVER_TIMESTAMP
         })
 
-    async def minus_points(self, username: str):
+    async def minus_points(self, username: str, points: int):
+        if (points < 1 or points > 5):
+            raise SyntaxError("Points must be within 1 to 5")
+
         user_doc = await self.get_user_doc(username)
         if (user_doc["points"] == 0):
             raise ValueError("User has insufficient points")
 
         doc_ref = self.get_user_doc_ref(username)
         await doc_ref.update({
-            "points": firestore.Increment(-1),
+            "points": firestore.Increment(-points),
             "last_updated": firestore.SERVER_TIMESTAMP
         })
     
