@@ -13,6 +13,7 @@ class Firestore():
 
         # Constants for firestore collection
         self.USER_COLLECTION = "users"
+        self.ROLE_COLLECTION = "roles"
 
     def get_user_doc_ref(self, username: str):
         return self.db.collection(self.USER_COLLECTION).document(username)
@@ -73,5 +74,28 @@ class Firestore():
             result.append(data)
 
         return sorted(result, key=lambda x: x["points"])
+    
+    def get_role_doc_ref(self, role_id: str):
+        return self.db.collection(self.ROLE_COLLECTION).document(role_id)
+
+    async def get_role_doc(self, role_id: str):
+        doc_ref = self.get_role_doc_ref(role_id)
+        doc = await doc_ref.get()
+
+        return doc.to_dict()
+    
+    async def create_role(self, id: str, name: str, emoji: str):
+        role_doc = {
+            "id": id,
+            "name": name,
+            "emoji": emoji
+        }
+
+        doc_ref = self.get_role_doc_ref(id)
+        await doc_ref.set(role_doc)
+    
+    async def delete_role(self, id: str):
+        doc_ref = self.get_role_doc_ref(id)
+        await doc_ref.delete()
 
 
