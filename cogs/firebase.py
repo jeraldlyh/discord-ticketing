@@ -3,7 +3,8 @@ from firebase_admin import firestore
 
 DEFAULT_PROFILE = {
     "points": 0,
-    "is_blocked": False
+    "is_blocked": False,
+    "last_updated": firestore.SERVER_TIMESTAMP
 }
 
 class Firestore():
@@ -19,7 +20,7 @@ class Firestore():
     async def get_user_doc(self, username: str):
         doc_ref = self.get_user_doc_ref(username)
         doc = await doc_ref.get()
-        print(doc.to_dict())
+
         return doc.to_dict()
 
     async def is_user_exist(self, username: str):
@@ -35,7 +36,8 @@ class Firestore():
     async def add_points(self, username: str):
         doc_ref = self.get_user_doc_ref(username)
         await doc_ref.update({
-            "points": firestore.Increment(1)
+            "points": firestore.Increment(1),
+            "last_updated": firestore.SERVER_TIMESTAMP
         })
 
     async def minus_points(self, username: str):
@@ -45,7 +47,8 @@ class Firestore():
 
         doc_ref = self.get_user_doc_ref(username)
         await doc_ref.update({
-            "points": firestore.Increment(-1)
+            "points": firestore.Increment(-1),
+            "last_updated": firestore.SERVER_TIMESTAMP
         })
     
     async def block_user(self, username: str, is_blocked=False):
