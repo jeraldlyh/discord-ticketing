@@ -120,7 +120,7 @@ class Firestore():
         await doc_ref.set(message_doc)
 
     async def get_reaction_message(self, message_id: str):
-        doc_ref = self.get_message_doc_ref(role_id)
+        doc_ref = self.get_message_doc_ref(message_id)
         doc = await doc_ref.get()
 
         return doc.to_dict()

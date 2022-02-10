@@ -14,6 +14,8 @@ class Score(commands.Cog):
     @commands.has_any_role("Sponsor")
     @commands.command()
     async def add(self, ctx: commands.Context, user: discord.Member, points: int = 1):
+        """Award a user with points up to 5 points"""
+
         try:
             username = user.name
             is_user_exist = await self.firestore.is_user_exist(username)
@@ -33,6 +35,8 @@ class Score(commands.Cog):
     @commands.has_any_role("Sponsor")
     @commands.command()
     async def minus(self, ctx: commands.Context, user: discord.Member, points: int = 1):
+        """Deduct points from a user"""
+
         try:
             username = user.name
             is_user_exist = await self.firestore.is_user_exist(username)
@@ -105,6 +109,8 @@ class Score(commands.Cog):
 
     @commands.command()
     async def list(self, ctx: commands.Context):
+        """Display user points"""
+
         username = ctx.message.author.name
         user_doc = await self.firestore.get_user_doc(username)
 
