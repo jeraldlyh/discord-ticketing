@@ -14,6 +14,7 @@ class Firestore():
         # Constants for firestore collection
         self.USER_COLLECTION = "users"
         self.ROLE_COLLECTION = "roles"
+        self.MESSAGE_COLLECTION = "messages"
 
     def get_user_doc_ref(self, username: str):
         return self.db.collection(self.USER_COLLECTION).document(username)
@@ -98,4 +99,29 @@ class Firestore():
         doc_ref = self.get_role_doc_ref(id)
         await doc_ref.delete()
 
+    async def get_all_roles(self):
+        docs = self.db.collection(self.ROLE_COLLECTION).stream()
+        result = []
+
+        async for doc in docs:
+            data = doc.to_dict()
+            result.append(data)
+        return result
+    
+    def get_message_doc_ref(self, message_id: str):
+        return self.db.collection(self.MESSAGE_COLLECTION).document(message_id)
+
+    async def register_reaction_message(self, message_id: str):
+        message_doc = {
+            "id": message_id
+        }
+
+        doc_ref = self.get_message_doc_ref(message_id)
+        await doc_ref.set(message_doc)
+
+    async def get_reaction_message(self, message_id: str):
+        doc_ref = self.get_message_doc_ref(role_id)
+        doc = await doc_ref.get()
+
+        return doc.to_dict()
 
