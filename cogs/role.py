@@ -13,15 +13,17 @@ class Role(commands.Cog):
         self.bot = bot
         self.firestore = Firestore()
 
-    @commands.has_any_role("Server Support")
     @commands.command()
+    @commands.has_any_role("Server Support")
     async def add_role(self, ctx: commands.Context, role: discord.Role, emoji: str):
         role_id = str(role.id)
-        role_doc = await self.firestore.get_role_doc(role_id)
+        role_docs = await self.firestore.get_all_roles()
 
-        if role_doc is not None:
-            embed = command_embed(description=f"{role.name} role already exists with a reaction of {role_doc['emoji']}", error=True)
-            return await ctx.send(embed=embed)
+        for role_doc in role_docs:
+            if role_doc["id"] == role_id or role_doc["emoji"] == emoji:
+                role_mention = discord.utils.get(ctx.guild.roles, id=int(role_doc["id"])).mention
+                embed = command_embed(description=f"{role_mention} already exists with a reaction of {role_doc['emoji']}", error=True)
+                return await ctx.send(embed=embed)
         
         if emoji not in UNICODE_EMOJI["en"]:
             embed = command_embed(description=f"{emoji} is not an emoji", error=True)
@@ -31,8 +33,8 @@ class Role(commands.Cog):
         embed = command_embed(description=f"Successfully created a role reaction with {emoji}")
         return await ctx.send(embed=embed)
 
-    @commands.has_any_role("Server Support")
     @commands.command()
+    @commands.has_any_role("Server Support")
     async def delete_role(self, ctx: commands.Context, role: discord.Role):
         role_id = str(role.id)
         role_doc = await self.firestore.get_role_doc(role_id)
@@ -44,7 +46,6 @@ class Role(commands.Cog):
         await self.firestore.delete_role(role_id)
         embed = command_embed(description=f"Successfully deleted {role.name}")
         return await ctx.send(embed=embed)
-
 
 
 # Adding the cog to main script
