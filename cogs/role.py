@@ -2,6 +2,7 @@ import discord
 import os
 
 from discord.ext import commands
+from discord.commands import slash_command
 from emoji import UNICODE_EMOJI
 from typing import List
 from cogs.utils.embed import command_embed, insufficient_points_embed
@@ -13,11 +14,9 @@ class Role(commands.Cog):
         self.bot = bot
         self.firestore = Firestore()
 
-    @commands.command()
+    @slash_command(guild_ids=[int(os.getenv("GUILD_ID"))], name="add_role", description="Register a role with specified emoji that listens to reaction")
     @commands.has_any_role("Server Support")
     async def add_role(self, ctx: commands.Context, role: discord.Role, emoji: str):
-        """Register a role with specified emoji that listens to reaction"""
-
         role_id = str(role.id)
         role_docs = await self.firestore.get_all_roles()
 
@@ -35,11 +34,9 @@ class Role(commands.Cog):
         embed = command_embed(description=f"Successfully created a role reaction with {emoji}")
         return await ctx.send(embed=embed)
 
-    @commands.command()
+    @slash_command(guild_ids=[int(os.getenv("GUILD_ID"))], name="remove_role", description="Delete a role that listens to reaction")
     @commands.has_any_role("Server Support")
     async def delete_role(self, ctx: commands.Context, role: discord.Role):
-        """Delete a role that listens to reaction"""
-
         role_id = str(role.id)
         role_doc = await self.firestore.get_role_doc(role_id)
 

@@ -10,9 +10,9 @@ from discord.ext import commands
 
 class ModMail(commands.Bot):
     def __init__(self):
-        intents = discord.Intents.default()
+        intents = discord.Intents.all()
         intents.members = True
-        super().__init__(command_prefix="-", intents=intents)
+        super().__init__(command_prefix=commands.when_mentioned_or("-"), intents=intents)
         self.IGNORE_FILES = ["firebase", "modmail"]
 
     def load_cogs(self):
