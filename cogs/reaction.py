@@ -22,18 +22,35 @@ class Reaction(commands.Cog):
 
         description = ""
         for role in roles:
-            description += f"React with {role['emoji']} to raise a ticket for {role['name']}\n"
+            role_mention = discord.utils.get(ctx.guild.roles, id=int(role["id"])).mention
+            description += f"React with {role['emoji']} to raise a ticket for {role_mention}\n"
 
         embed.description = description
         message = await ctx.send(embed=embed)
 
         await asyncio.gather(*[message.add_reaction(role["emoji"]) for role in roles])
-        await self.firestore.register_reaction_message(message.id)
+        await self.firestore.register_reaction_message(str(message.id))
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]):
-        reaction_message = await self.firestore.get_reaction_message(reaction.message)
-        pass
+        message = reaction.message
+        reaction_message = await self.firestore.get_reaction_message(str(message.id))
+
+        if reaction_message is None or user.bot:
+            print("Exiting", reaction_message, user.bot)
+            return
+
+        await message.remove_reaction(reaction.emoji, user)
+        
+        embed = discord.Embed(title="Thanks for the message!")
+        embed.description = "You've just requested"
+        embed.color = discord.Color.green()
+        role = await self.firestore.get_role_by_emoji(reaction.emoji)
+
+        embed.add_field(name="Category", value=role["name"])
+        embed.add_field(name="Time Limit", value=60)
+
+        return await user.send(embed=embed)
 
 # Adding the cog to main script
 def setup(bot):

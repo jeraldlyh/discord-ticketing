@@ -29,9 +29,10 @@ async def on_ready():
 
 
 if __name__ == "__main__":
+    ignore = ["firebase", "modmail"]
     for filename in os.listdir("./cogs"):
         try:
-            if filename.endswith(".py") and not "firebase" in filename:
+            if filename.endswith(".py") and filename[:-3] not in ignore:
                 cog = f"cogs.{filename[:-3]}"
                 bot.load_extension(cog)
                 print(f"Loaded {cog}")

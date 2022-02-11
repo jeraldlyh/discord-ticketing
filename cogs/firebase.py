@@ -124,4 +124,13 @@ class Firestore():
         doc = await doc_ref.get()
 
         return doc.to_dict()
+    
+    async def get_role_by_emoji(self, emoji: str):
+        roles = self.db.collection(self.ROLE_COLLECTION).where("emoji", "==", emoji).limit(1)
+        docs = roles.stream()
+        data = [doc.to_dict() async for doc in docs]
+
+        return None if not data else data[0]
+
+
 
