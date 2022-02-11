@@ -2,6 +2,7 @@ import discord
 import os
 
 from discord.ext import commands
+from discord.commands import slash_command
 from cogs.utils.embed import command_embed, insufficient_points_embed
 from cogs.firebase import Firestore
 
@@ -11,8 +12,12 @@ class Score(commands.Cog):
         self.bot = bot
         self.firestore = Firestore()
 
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="add",
+        description="Award a user up to 5 points",
+    )
     @commands.has_any_role("Sponsor")
-    @commands.command()
     async def add(self, ctx: commands.Context, user: discord.Member, points: int = 1):
         """Award a user with points up to 5 points"""
 
@@ -22,7 +27,7 @@ class Score(commands.Cog):
 
             if not is_user_exist:
                 await self.firestore.create_user(username)
-            
+
             await self.firestore.add_points(username, points)
             embed = command_embed(
                 description=f"Successfully added {points} point to {user.mention}"
@@ -32,11 +37,13 @@ class Score(commands.Cog):
             embed = command_embed(description=str(e), error=True)
             return await ctx.send(embed=embed)
 
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="minus",
+        description="Deduct points from a user",
+    )
     @commands.has_any_role("Sponsor")
-    @commands.command()
     async def minus(self, ctx: commands.Context, user: discord.Member, points: int = 1):
-        """Deduct points from a user"""
-
         try:
             username = user.name
             is_user_exist = await self.firestore.is_user_exist(username)
@@ -56,17 +63,23 @@ class Score(commands.Cog):
             embed = command_embed(description=str(e), error=True)
             return await ctx.send(embed=embed)
 
-    @commands.command()
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="help",
+        description="Display available commands",
+    )
     @commands.has_any_role("Server Support")
     async def help(self, ctx: commands.Context):
         if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
-            logs = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
+            logs = discord.utils.get(
+                ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL")
+            )
             embed = command_embed(
                 description=f"{ctx.message.author.mention} Commands can only be used in {logs.mention}",
-                error=True
+                error=True,
             )
             return await ctx.send(embed=embed)
-        
+
         embed = discord.Embed(
             title="Available Commands",
             color=0xA53636,
@@ -74,7 +87,9 @@ class Score(commands.Cog):
         for command in self.bot.commands:
             print(command, command.help, command.name)
 
-        embed.description=("\n".join([str(command) + " - " + str(command.help) for command in self.bot.commands]))
+        embed.description = "\n".join(
+            [str(command) + " - " + str(command.help) for command in self.bot.commands]
+        )
         await ctx.send(embed=embed)
 
     # @commands.command()
@@ -107,16 +122,19 @@ class Score(commands.Cog):
     #     # Send leftover buffer
     #     await self.send_scoreboard(ctx, username_value, points_value)
 
-    @commands.command()
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="list",
+        description="Display user points",
+    )
     async def list(self, ctx: commands.Context):
-        """Display user points"""
-
         username = ctx.message.author.name
         user_doc = await self.firestore.get_user_doc(username)
 
-        return await self.send_scoreboard(ctx, username, 0 if user_doc is None else user_doc["points"])
+        return await self.send_scoreboard(
+            ctx, username, 0 if user_doc is None else user_doc["points"]
+        )
 
-    
     async def send_scoreboard(self, ctx: commands.Context, usernames, points):
         # embed = discord.Embed(title="Scoreboard")
         embed = discord.Embed(color=discord.Color.random())
@@ -124,7 +142,6 @@ class Score(commands.Cog):
         embed.add_field(name="Username", value=usernames, inline=True)
         embed.add_field(name="Points", value=points, inline=True)
         return await ctx.send(embed=embed)
-
 
 
 # Adding the cog to main script
