@@ -22,12 +22,9 @@ class Score(commands.Cog):
         """Award a user with points up to 5 points"""
 
         try:
-            username = user.name
-            is_user_exist = await self.firestore.is_user_exist(username)
+            username = str(user)
 
-            if not is_user_exist:
-                await self.firestore.create_user(username)
-
+            await self.firestore.get_user_doc(username)
             await self.firestore.add_points(username, points)
             embed = command_embed(
                 description=f"Successfully added {points} point to {user.mention}"
@@ -45,13 +42,9 @@ class Score(commands.Cog):
     @commands.has_any_role("Sponsor")
     async def _minus(self, ctx, user: discord.Member, points: int = 1):
         try:
-            username = user.name
-            is_user_exist = await self.firestore.is_user_exist(username)
+            username = str(user)
 
-            if not is_user_exist:
-                await self.firestore.create_user(username)
-                return await ctx.send(embed=insufficient_points_embed(user))
-
+            await self.firestore.get_user_doc(username)
             await self.firestore.minus_points(username, points)
             embed = command_embed(
                 description=f"Successfully deducted {points} point from {user.mention}"
@@ -62,38 +55,6 @@ class Score(commands.Cog):
         except SyntaxError as e:
             embed = command_embed(description=str(e), error=True)
             return await ctx.send(embed=embed)
-
-    @slash_command(
-        guild_ids=[int(os.getenv("GUILD_ID"))],
-        name="help",
-        description="Display available commands",
-    )
-    @commands.has_any_role("Server Support")
-    async def _help(self, ctx):
-        await ctx.defer()
-
-        if ctx.interaction.channel != os.getenv("LOGGING_CHANNEL"):
-            logs = discord.utils.get(
-                ctx.guild.channels, name=os.getenv("LOGGING_CHANNEL")
-            )
-            print(logs)
-            embed = command_embed(
-                description=f"{ctx.user.mention} Commands can only be used in {logs.mention}",
-                error=True,
-            )
-            return await ctx.respond(embed=embed)
-
-        embed = discord.Embed(
-            title="Available Commands",
-            color=0xA53636,
-        )
-        for command in self.bot.commands:
-            print(command, command.help, command.name)
-
-        embed.description = "\n".join(
-            [str(command) + " - " + str(command.help) for command in self.bot.commands]
-        )
-        await ctx.respond(embed=embed)
 
     # @commands.command()
     # @commands.has_any_role("Sponsor")
