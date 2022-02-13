@@ -5,6 +5,8 @@ import datetime
 import firebase_admin
 
 from dotenv import load_dotenv
+from cogs.firebase import Firestore
+from cogs.view import TicketSupportView
 from discord.ext import commands
 
 
@@ -12,7 +14,9 @@ class ModMail(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
         intents.members = True
-        super().__init__(command_prefix=commands.when_mentioned_or("-"), intents=intents)
+        super().__init__(
+            command_prefix=commands.when_mentioned_or("-"), intents=intents
+        )
         self.IGNORE_FILES = ["firebase", "modmail"]
 
     def load_cogs(self):
@@ -28,10 +32,22 @@ class ModMail(commands.Bot):
     async def on_ready(self):
         self.remove_command("help")
         self.load_cogs()
-        await self.change_presence(
-            activity=discord.Activity(name="Your PMs", type=2)
-        )
-        await self.sync_commands()
+        await self.change_presence(activity=discord.Activity(name="Your PMs", type=2))
+        # await self.sync_commands()
+
+        # Reloads persistent view upon relaunching
+        db = Firestore()
+        last_view_message = await db.get_last_view_message()
+        roles = await db.get_all_roles()
+        guild = discord.utils.get(self.guilds, id=int(os.getenv("GUILD_ID")))
+
+        if last_view_message is not None:
+            print(f"Adding persistent view to {last_view_message['id']}")
+            self.add_view(
+                view=TicketSupportView(self, roles, guild, db),
+                message_id=int(last_view_message["id"]),
+            )
+
         time_now = datetime.datetime.now(tz=pytz.timezone("Asia/Singapore"))
         login_time = time_now.strftime("%d-%m-%Y %I:%M %p")
         print("-----------------")
