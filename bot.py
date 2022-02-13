@@ -52,7 +52,7 @@ class ModMail(commands.Bot):
                 else:
                     print(f"Adding persistent view to {ticket['id']}")
                     self.add_view(
-                        view=TicketView(ticket["role_id"]),
+                        view=TicketView(ticket["role_id"], db),
                         message_id=int(ticket["id"]),
                     )
 

@@ -4,7 +4,6 @@ import os
 from discord.ext import commands
 from discord.commands import slash_command
 from emoji import UNICODE_EMOJI
-from typing import List
 from cogs.utils.embed import command_embed, insufficient_points_embed
 from cogs.firebase import Firestore
 

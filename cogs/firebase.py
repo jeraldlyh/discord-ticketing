@@ -110,14 +110,14 @@ class Firestore:
             result.append(data)
         return result
 
-    def get_message_doc_ref(self, message_id: str):
-        return self.db.collection(self.TICKET_COLLECTION).document(message_id)
+    def get_ticket_doc_ref(self, ticket_id: str):
+        return self.db.collection(self.TICKET_COLLECTION).document(ticket_id)
 
     async def register_ticket(
-        self, message_id: str, is_root: bool, username: str, role_id: str
+        self, ticket_id: str, is_root: bool, username: str, role_id: str
     ):
-        message_doc = {
-            "id": message_id,
+        ticket_doc = {
+            "id": ticket_id,
             "last_updated": firestore.SERVER_TIMESTAMP,
             "is_available": True,
             "is_root": is_root,
@@ -125,16 +125,16 @@ class Firestore:
             "role_id": role_id,
         }
 
-        doc_ref = self.get_message_doc_ref(message_id)
-        await doc_ref.set(message_doc)
+        doc_ref = self.get_ticket_doc_ref(ticket_id)
+        await doc_ref.set(ticket_doc)
 
     async def is_ticket_exist(self, username: str):
-        messages = (
+        tickets = (
             self.db.collection(self.TICKET_COLLECTION)
             .where("username", "==", username)
             .where("is_available", "==", True)
         )
-        docs = messages.stream()
+        docs = tickets.stream()
         data = [doc.to_dict() async for doc in docs]
 
         return True if data else False
@@ -151,10 +151,23 @@ class Firestore:
         return None if not data else data[0]
 
     async def get_available_tickets(self):
-        messages = self.db.collection(self.TICKET_COLLECTION).where(
+        tickets = self.db.collection(self.TICKET_COLLECTION).where(
             "is_available", "==", True
         )
 
-        docs = messages.stream()
+        docs = tickets.stream()
 
         return [doc.to_dict() async for doc in docs]
+
+    async def delete_ticket(self, username: str):
+        query = (
+            self.db.collection(self.TICKET_COLLECTION)
+            .where("is_root", "==", False)
+            .where("is_available", "==", True)
+            .where("username", "==", username)
+        )
+        tickets = await query.get()
+        ticket_id = tickets[0].to_dict()["id"]
+
+        ticket = self.get_ticket_doc_ref(ticket_id)
+        return await ticket.update({"is_available": False})
