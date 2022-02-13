@@ -31,13 +31,13 @@ class Score(commands.Cog):
 
             await self.firestore.get_user_doc(username)
             await self.firestore.add_points(username, points)
-            return await ctx.send(
+            return await ctx.respond(
                 embed=command_embed(
                     description=f"Successfully added {points} point to {user.mention}"
                 )
             )
         except SyntaxError as e:
-            return await ctx.send(embed=command_embed(description=str(e), error=True))
+            return await ctx.respond(embed=command_embed(description=str(e), error=True))
 
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
@@ -53,7 +53,7 @@ class Score(commands.Cog):
     ):
         try:
             if points < 0:
-                return await ctx.send(
+                return await ctx.respond(
                     embed=command_embed("Kindly enter a positive number!", error=True)
                 )
 
@@ -62,15 +62,15 @@ class Score(commands.Cog):
             await self.firestore.get_user_doc(username)
             await self.firestore.minus_points(username, points)
 
-            return await ctx.send(
+            return await ctx.respond(
                 embed=command_embed(
                     description=f"Successfully deducted {points} point from {user.mention}"
                 )
             )
         except ValueError:
-            return await ctx.send(embed=insufficient_points_embed(user))
+            return await ctx.respond(embed=insufficient_points_embed(user))
         except SyntaxError as e:
-            return await ctx.send(embed=command_embed(description=str(e), error=True))
+            return await ctx.respond(embed=command_embed(description=str(e), error=True))
 
     # @commands.command()
     # @commands.has_any_role("Sponsor")
@@ -121,7 +121,7 @@ class Score(commands.Cog):
 
         embed.add_field(name="Username", value=usernames, inline=True)
         embed.add_field(name="Points", value=points, inline=True)
-        return await ctx.send(embed=embed)
+        return await ctx.respond(embed=embed)
 
 
 # Adding the cog to main script

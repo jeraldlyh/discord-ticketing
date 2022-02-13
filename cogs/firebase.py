@@ -68,6 +68,7 @@ class Firestore:
         )
 
     async def block_user(self, username: str, is_blocked=False):
+        await self.get_user_doc(username)
         doc_ref = self.get_user_doc_ref(username)
         await doc_ref.update({"is_blocked": is_blocked})
 
