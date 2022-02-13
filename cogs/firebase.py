@@ -113,12 +113,16 @@ class Firestore:
     def get_message_doc_ref(self, message_id: str):
         return self.db.collection(self.TICKET_COLLECTION).document(message_id)
 
-    async def register_ticket(self, message_id: str, is_root: bool):
+    async def register_ticket(
+        self, message_id: str, is_root: bool, username: str, role_id: str
+    ):
         message_doc = {
             "id": message_id,
             "last_updated": firestore.SERVER_TIMESTAMP,
             "is_available": True,
             "is_root": is_root,
+            "username": username,
+            "role_id": role_id,
         }
 
         doc_ref = self.get_message_doc_ref(message_id)

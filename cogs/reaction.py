@@ -34,7 +34,7 @@ If you have any questions or inquiries regarding the {str(os.getenv('TYPE'))}, p
         embed.description = description
 
         message = await ctx.send(embed=embed, view=view)
-        await self.firestore.register_ticket(str(message.id), True)
+        await self.firestore.register_ticket(str(message.id), True, str(ctx.author), "")
         self.bot.add_view(view)
 
 

@@ -7,8 +7,9 @@ from cogs.firebase import Firestore
 
 
 class TicketView(View):
-    def __init__(self):
+    def __init__(self, role_id: int):
         super().__init__(timeout=None)
+        self.role_id = role_id
 
     @discord.ui.button(
         label="Claim",
@@ -21,7 +22,10 @@ class TicketView(View):
         print(user, user.roles)
 
         # Validates if user have support role to access claim functionality
-        if not any(os.getenv("SUPPORT_ROLE") == role.name for role in user.roles):
+        if not any(
+            os.getenv("SUPPORT_ROLE") == role.name or self.role_id == role.id
+            for role in user.roles
+        ):
             return
         print("have support")
         message = interaction.message
@@ -95,8 +99,12 @@ class CustomButton(Button):
         )
         await channel.edit(topic=role.id)  # Set ticket role ID in channel topic
         embed = self.ticket_embed(user, role)
-        message = await channel.send(content=f"{user.mention}, {role.mention}", embed=embed, view=TicketView())
-        return await self.firestore.register_ticket(str(message.id), False)
+        message = await channel.send(
+            content=f"{user.mention}, {role.mention}",
+            embed=embed,
+            view=TicketView(role.id),
+        )
+        return await self.firestore.register_ticket(str(message.id), False, str(user), str(role.id))
 
     def ticket_embed(
         self, user: Union[discord.Member, discord.User], role: discord.Role
