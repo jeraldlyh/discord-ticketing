@@ -14,8 +14,8 @@ class Reaction(commands.Cog):
 
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
-        name="add",
-        description="Award a user up to 5 points",
+        name="react",
+        description="Sends a message that listens to button interactions",
     )
     @commands.has_permissions(administrator=True)
     async def react(self, ctx):
