@@ -10,6 +10,7 @@ class TicketView(View):
     def __init__(self, role_id: int):
         super().__init__(timeout=None)
         self.role_id = role_id
+        self.is_claimed = False
 
     @discord.ui.button(
         label="Claim",
@@ -19,17 +20,23 @@ class TicketView(View):
     )
     async def claim(self, button: Button, interaction: discord.Interaction):
         user = interaction.user
-        print(user, user.roles)
 
-        # Validates if user have support role to access claim functionality
-        if not any(
-            os.getenv("SUPPORT_ROLE") == role.name or self.role_id == role.id
-            for role in user.roles
-        ):
+        # Validates if user have support role to access claim functionality or ticket has previously been claimed
+        if not self.is_interaction_allowed(user) or self.is_claimed:
             return
-        print("have support")
-        message = interaction.message
-        pass
+
+        channel = interaction.channel
+
+        # Ticket user does not have any other roles except @everyone
+        for member in channel.members:
+            if len(member.roles) == 1:
+                ticket_user = member
+                break
+
+        self.is_claimed = True
+        return await channel.send(
+            content=ticket_user.mention, embed=self.claim_embed(user)
+        )
 
     @discord.ui.button(
         label="Close",
@@ -38,9 +45,25 @@ class TicketView(View):
         emoji="🔓",
     )
     async def close(self, button: Button, interaction: discord.Interaction):
-        user_role = interaction.user
-        message = interaction.message
-        pass
+        user = interaction.user
+
+        if (
+            not self.is_interaction_allowed(user)
+            and interaction.channel.name != str(user).replace("#", "").lower()
+        ):
+            return
+
+    def is_interaction_allowed(self, user: Union[discord.User, discord.Member]):
+        # Validates if user have support role to access claim functionality
+        return any(
+            os.getenv("SUPPORT_ROLE") == role.name or self.role_id == role.id
+            for role in user.roles
+        )
+
+    def claim_embed(self, user: Union[discord.User, discord.Member]):
+        embed = discord.Embed(color=discord.Color.green(), title="Ticket Claimed")
+        embed.description = f"{user.mention} will be assisting you on the issue!"
+        return embed
 
 
 class CustomButton(Button):
@@ -100,11 +123,13 @@ class CustomButton(Button):
         await channel.edit(topic=role.id)  # Set ticket role ID in channel topic
         embed = self.ticket_embed(user, role)
         message = await channel.send(
-            content=f"{user.mention}, {role.mention}",
+            content=f"{user.mention} {role.mention}",
             embed=embed,
             view=TicketView(role.id),
         )
-        return await self.firestore.register_ticket(str(message.id), False, str(user), str(role.id))
+        return await self.firestore.register_ticket(
+            str(message.id), False, str(user), str(role.id)
+        )
 
     def ticket_embed(
         self, user: Union[discord.Member, discord.User], role: discord.Role
