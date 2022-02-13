@@ -19,7 +19,7 @@ Whenever a user sends a direct message to the bot, a channel/thread will be crea
     -   `-minus <userMention>` - Deducts one point from specified user
 
 ## Notes
--   Moderators must be assigned the `Server Support` role to access the commands.
+-   Moderators must be assigned a support role (specified in environment variables) to access the commands.
 -   Tweak and configure the category name accordingly to your preference in the script by replacing the default name stated above in the script.
 
 ## Environment Variables
@@ -29,6 +29,8 @@ Whenever a user sends a direct message to the bot, a channel/thread will be crea
 | `GUILD_ID`           | Discord server ID                                                                       |
 | `LOGGING_CHANNEL`    | Name of logging channel (recommended: mail-logs)                                        |
 | `GOOGLE_CREDENTIALS` | Firebase service [account](https://firebase.google.com/support/guides/service-accounts) |
+| `TYPE`               | Type of support that the server is providing (i.e. CTF, Hackathons)                     |
+| `SUPPORT_ROLE`       | Name of support role to access the bot                                                  |
 
 
 ## Local Deployment
