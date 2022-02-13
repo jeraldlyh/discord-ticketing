@@ -2,7 +2,7 @@ import discord
 import os
 
 from discord.ext import commands
-from discord.commands import slash_command
+from discord.commands import slash_command, Option
 from cogs.utils.embed import command_embed, insufficient_points_embed
 from cogs.firebase import Firestore
 
@@ -18,7 +18,12 @@ class Score(commands.Cog):
         description="Award a user up to 5 points",
     )
     @commands.has_any_role("Sponsor")
-    async def _add(self, ctx, user: discord.Member, points: int = 1):
+    async def _add(
+        self,
+        ctx,
+        user: discord.Member,
+        points: Option(int, "Enter a number between 1 to 5", required=False, default=1),
+    ):
         """Award a user with points up to 5 points"""
 
         try:
@@ -26,13 +31,13 @@ class Score(commands.Cog):
 
             await self.firestore.get_user_doc(username)
             await self.firestore.add_points(username, points)
-            embed = command_embed(
-                description=f"Successfully added {points} point to {user.mention}"
+            return await ctx.send(
+                embed=command_embed(
+                    description=f"Successfully added {points} point to {user.mention}"
+                )
             )
-            return await ctx.send(embed=embed)
         except SyntaxError as e:
-            embed = command_embed(description=str(e), error=True)
-            return await ctx.send(embed=embed)
+            return await ctx.send(embed=command_embed(description=str(e), error=True))
 
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
@@ -40,21 +45,32 @@ class Score(commands.Cog):
         description="Deduct points from a user",
     )
     @commands.has_any_role("Sponsor")
-    async def _minus(self, ctx, user: discord.Member, points: int = 1):
+    async def _minus(
+        self,
+        ctx,
+        user: discord.Member,
+        points: Option(int, "Enter a positive number", required=False, default=1),
+    ):
         try:
+            if points < 0:
+                return await ctx.send(
+                    embed=command_embed("Kindly enter a positive number!", error=True)
+                )
+
             username = str(user)
 
             await self.firestore.get_user_doc(username)
             await self.firestore.minus_points(username, points)
-            embed = command_embed(
-                description=f"Successfully deducted {points} point from {user.mention}"
+
+            return await ctx.send(
+                embed=command_embed(
+                    description=f"Successfully deducted {points} point from {user.mention}"
+                )
             )
-            return await ctx.send(embed=embed)
         except ValueError:
             return await ctx.send(embed=insufficient_points_embed(user))
         except SyntaxError as e:
-            embed = command_embed(description=str(e), error=True)
-            return await ctx.send(embed=embed)
+            return await ctx.send(embed=command_embed(description=str(e), error=True))
 
     # @commands.command()
     # @commands.has_any_role("Sponsor")

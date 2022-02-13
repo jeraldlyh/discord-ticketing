@@ -31,6 +31,7 @@ Whenever a user sends a direct message to the bot, a channel/thread will be crea
 | `GOOGLE_CREDENTIALS` | Firebase service [account](https://firebase.google.com/support/guides/service-accounts) |
 | `TYPE`               | Type of support that the server is providing (i.e. CTF, Hackathons)                     |
 | `SUPPORT_ROLE`       | Name of support role to access the bot                                                  |
+| `SUPPORT_CATEGORY`   | Name of support category to for ticket logs                                             |
 
 
 ## Local Deployment
