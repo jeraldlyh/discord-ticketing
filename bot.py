@@ -37,23 +37,23 @@ class ModMail(commands.Bot):
 
         # Reloads persistent view upon relaunching
         db = Firestore()
-        available_messages = await db.get_available_reaction_messages()
+        tickets = await db.get_available_tickets()
         roles = await db.get_all_roles()
         guild = discord.utils.get(self.guilds, id=int(os.getenv("GUILD_ID")))
 
-        if available_messages:
-            for message in available_messages:
-                if message["is_root"]:
-                    print(f"Adding persistent root view to {message['id']}")
+        if tickets:
+            for ticket in tickets:
+                if ticket["is_root"]:
+                    print(f"Adding persistent root view to {ticket['id']}")
                     self.add_view(
                         view=TicketSupportView(self, roles, guild, db),
-                        message_id=int(message["id"]),
+                        message_id=int(ticket["id"]),
                     )
                 else:
-                    print(f"Adding persistent view to {message['id']}")
+                    print(f"Adding persistent view to {ticket['id']}")
                     self.add_view(
                         view=TicketView(),
-                        message_id=int(message["id"]),
+                        message_id=int(ticket["id"]),
                     )
 
         time_now = datetime.datetime.now(tz=pytz.timezone("Asia/Singapore"))

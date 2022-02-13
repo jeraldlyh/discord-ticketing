@@ -14,7 +14,7 @@ class Firestore:
         # Constants for firestore collection
         self.USER_COLLECTION = "users"
         self.ROLE_COLLECTION = "roles"
-        self.MESSAGE_COLLECTION = "messages"
+        self.TICKET_COLLECTION = "tickets"
 
     def get_user_doc_ref(self, username: str):
         return self.db.collection(self.USER_COLLECTION).document(username)
@@ -111,9 +111,9 @@ class Firestore:
         return result
 
     def get_message_doc_ref(self, message_id: str):
-        return self.db.collection(self.MESSAGE_COLLECTION).document(message_id)
+        return self.db.collection(self.TICKET_COLLECTION).document(message_id)
 
-    async def register_reaction_message(self, message_id: str, is_root: bool):
+    async def register_ticket(self, message_id: str, is_root: bool):
         message_doc = {
             "id": message_id,
             "last_updated": firestore.SERVER_TIMESTAMP,
@@ -124,11 +124,16 @@ class Firestore:
         doc_ref = self.get_message_doc_ref(message_id)
         await doc_ref.set(message_doc)
 
-    async def get_reaction_message(self, message_id: str):
-        doc_ref = self.get_message_doc_ref(message_id)
-        doc = await doc_ref.get()
+    async def is_ticket_exist(self, username: str):
+        messages = (
+            self.db.collection(self.TICKET_COLLECTION)
+            .where("username", "==", username)
+            .where("is_available", "==", True)
+        )
+        docs = messages.stream()
+        data = [doc.to_dict() async for doc in docs]
 
-        return doc.to_dict()
+        return True if data else False
 
     async def get_role_by_emoji(self, emoji: str):
         roles = (
@@ -141,11 +146,11 @@ class Firestore:
 
         return None if not data else data[0]
 
-    async def get_available_reaction_messages(self):
-        messages = (
-            self.db.collection(self.MESSAGE_COLLECTION)
-            .where("is_available", "==", True)
+    async def get_available_tickets(self):
+        messages = self.db.collection(self.TICKET_COLLECTION).where(
+            "is_available", "==", True
         )
+
         docs = messages.stream()
 
         return [doc.to_dict() async for doc in docs]

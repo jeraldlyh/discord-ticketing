@@ -1,4 +1,5 @@
 import discord
+import os
 
 from discord.ui import Button, View
 from typing import Union
@@ -19,6 +20,10 @@ class TicketView(View):
         user = interaction.user
         print(user, user.roles)
 
+        # Validates if user have support role to access claim functionality
+        if not any(os.getenv("SUPPORT_ROLE") == role.name for role in user.roles):
+            return
+        print("have support")
         message = interaction.message
         pass
 
@@ -90,8 +95,8 @@ class CustomButton(Button):
         )
         await channel.edit(topic=role.id)  # Set ticket role ID in channel topic
         embed = self.ticket_embed(user, role)
-        message = await channel.send(embed=embed, view=TicketView())
-        return await self.firestore.register_reaction_message(str(message.id), False)
+        message = await channel.send(content=f"{user.mention}, {role.mention}", embed=embed, view=TicketView())
+        return await self.firestore.register_ticket(str(message.id), False)
 
     def ticket_embed(
         self, user: Union[discord.Member, discord.User], role: discord.Role
