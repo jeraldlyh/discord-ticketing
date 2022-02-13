@@ -1,26 +1,23 @@
 ## Overview
-This is a rewrite version of [discord-modmail](https://github.com/jeraldlyh/discord-modmail). Discord modmail serves as a shared inbox for server moderators to communicate with users in a seamless way. It currently supports both text and image messages (.png, .jpg, .gif, .jpeg, .webp).
+This is a rewrite version of [discord-modmail](https://github.com/jeraldlyh/discord-modmail) due to the breaking changes released by Discord where all bots are expected to migrate over to Slash Commands by April 2022. Discord modmail serves as a shared inbox for server moderators to communicate with users in a seamless way.
 
 ## How does it work?
-Whenever a user sends a direct message to the bot, a channel/thread will be created in the designated category named `📋 Support`. Moderators are able to respond to the user via the text channel which users will receive moderator(s)' replies from their DMs thereafter.
+User is able to raise a ticket by interacting with the buttons on a support message which consists of various support categories configured by the server. A subsequent text channel will be created between both the user and support staffs that has the corresponding role belonging to the support category.
 
 ## Commands Usage
 -   **Server Administrators**
-    -   `-setup` - Automatically sets up the modmail module in the server
-    -   `-disable` - Close all current threads and disable modmail
+    -   `/setup` - Automatically sets up the ticketing module in the server
+    -   `/disable` - Close all current threads and disable ticketing
+    -   `/react` - Sends a message that listens for interactions with the buttons
 -   **Moderators**
-    -   `-reply <message>` - Replies the user with a message
-    -   `-close` - Resolve and close the current threaed
-    -   `-block <userID / userMention>` - Blocks specified user and prevent them from utilising modmail
-    -   `-unblock <userID / userMention>` - Unblocks specified user
-    -   `-help` - Display available commands for moderators
+    -   `-block <user>` - Blocks specified user and prevent them from utilising ticketing system
+    -   `-unblock <user>` - Unblocks specified user
 -   **Sponsors**
-    -   `-add <userMention>` - Awards one point to specified user
-    -   `-minus <userMention>` - Deducts one point from specified user
+    -   `/add <user> <points>` - Awards point(s) (default = 1) to specified user
+    -   `/minus <user> <points>` - Deducts point(s) (default = 1) from specified user
 
 ## Notes
 -   Moderators must be assigned a support role (specified in environment variables) to access the commands.
--   Tweak and configure the category name accordingly to your preference in the script by replacing the default name stated above in the script.
 
 ## Environment Variables
 | Name                 | Description                                                                             |
@@ -36,8 +33,8 @@ Whenever a user sends a direct message to the bot, a channel/thread will be crea
 
 ## Local Deployment
 ```bash
-git clone https://github.com/jeraldlyh/discord-modmail.git
-cd discord-modmail
+git clone https://github.com/jeraldlyh/discord-ticketing.git
+cd discord-ticketing
 
 # Usage of Virtual Env
 python3 -m venv .
@@ -58,6 +55,9 @@ heroku config:set BOT_TOKEN=<botToken>
 heroku config:set GUILD_ID=<guildID>
 heroku config:set LOGGING_CHANNEL=<loggingChannel>
 heroku config:set GOOGLE_CREDENTIALS=<googleCreds>
+heroku config:set TYPE=<type>
+heroku config:set SUPPORT_ROLE=<supportRole>
+heroku config:set SUPPORT_CATEGORY=<supportCategory>
 
 heroku buildpacks:set heroku/python
 heroku buildpacks:add --index 1 https://github.com/buyersight/heroku-google-application-credentials-buildpack.git
