@@ -2,12 +2,13 @@ import os
 import discord
 import pytz
 import datetime
+from cogs.utils.embed import command_embed
 import firebase_admin
 
 from dotenv import load_dotenv
-from discord.ext import commands
 from cogs.firebase import Firestore
 from cogs.view import TicketSupportView, TicketView
+from discord.ext import commands
 
 
 class ModMail(commands.Bot):
@@ -18,6 +19,16 @@ class ModMail(commands.Bot):
             command_prefix=commands.when_mentioned_or("-"), intents=intents
         )
         self.IGNORE_FILES = ["firebase", "modmail", "view"]
+
+    def load_cogs(self):
+        for filename in os.listdir("./cogs"):
+            try:
+                if filename.endswith(".py") and filename[:-3] not in self.IGNORE_FILES:
+                    cog = f"cogs.{filename[:-3]}"
+                    self.load_extension(cog)
+                    print(f"Loaded {cog}")
+            except Exception as e:
+                print(e)
 
     async def on_ready(self):
         self.remove_command("help")
