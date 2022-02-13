@@ -25,7 +25,7 @@ class TicketView(View):
 
 
 class CustomButton(Button):
-    def __init__(self, ctx: commands.Context, label: str, emoji: str, guild: discord.Guild):
+    def __init__(self, ctx, label: str, emoji: str, guild: discord.Guild):
         super().__init__(
             label=label,
             style=discord.ButtonStyle.secondary,
@@ -69,7 +69,7 @@ class Reaction(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def react(self, ctx: commands.Context):
+    async def react(self, ctx):
         guild = discord.utils.get(self.bot.guilds, id=int(os.getenv("GUILD_ID")))
         embed = discord.Embed(title=f"{guild.name} Support")
         roles = await self.firestore.get_all_roles()

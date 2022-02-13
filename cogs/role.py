@@ -20,7 +20,7 @@ class Role(commands.Cog):
         description="Register a role with specified emoji that listens to reaction",
     )
     @commands.has_any_role("Server Support")
-    async def _add_role(self, ctx: commands.Context, role: discord.Role, emoji: str):
+    async def _add_role(self, ctx, role: discord.Role, emoji: str):
         role_id = str(role.id)
         role_docs = await self.firestore.get_all_roles()
 
@@ -51,7 +51,7 @@ class Role(commands.Cog):
         description="Delete a role that listens to reaction",
     )
     @commands.has_any_role("Server Support")
-    async def _delete_role(self, ctx: commands.Context, role: discord.Role):
+    async def _delete_role(self, ctx, role: discord.Role):
         role_id = str(role.id)
         role_doc = await self.firestore.get_role_doc(role_id)
 
