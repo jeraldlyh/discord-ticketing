@@ -68,6 +68,30 @@ class Role(commands.Cog):
             embed=command_embed(description=f"Successfully deleted {role.name}")
         )
 
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="block",
+        description="Block a user from using ticketing system",
+    )
+    @commands.has_any_role("Server Support")
+    async def block(self, ctx: commands.Context, user: discord.Member):
+        await self.firestore.block_user(user.name, is_blocked=True)
+        await ctx.send(
+            embed=command_embed(description=f"Sucessfully blocked {user.mention}")
+        )
+
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="unblock",
+        description="Unblock a user from using ticketing system",
+    )
+    @commands.has_any_role("Server Support")
+    async def unblock(self, ctx: commands.Context, user: discord.Member):
+        await self.firestore.block_user(user.name)
+        return await ctx.send(
+            embed=command_embed(description=f"Sucessfully unblocked {user.mention}")
+        )
+
 
 # Adding the cog to main script
 def setup(bot):
