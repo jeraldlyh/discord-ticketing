@@ -7,13 +7,28 @@ class Error(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
-        if (isinstance(error, commands.MissingAnyRole)):
-            embed = command_embed(description=str(error), error=True)
-            return await ctx.send(embed=embed)
-        print(error)
-        embed = command_embed(description="Something went wrong with the server. Kindly contact an adminstrator.", error=True)
-        return await ctx.send(embed=embed)
+    async def on_command_error(self, ctx, error: commands.CommandError):
+        if isinstance(error, commands.MissingAnyRole):
+            return await ctx.send(
+                embed=command_embed(description=str(error), error=True)
+            )
+        print(str(error))
+        return await ctx.send(
+            embed=command_embed(
+                description="Something went wrong with the server. Kindly contact an adminstrator.",
+                error=True,
+            )
+        )
+
+    @commands.Cog.listener()
+    async def on_application_command_error(self, ctx, error: commands.CommandError):
+        print(str(error))
+        if isinstance(error, commands.MissingPermissions) or isinstance(
+            error, commands.MissingAnyRole
+        ):
+            return await ctx.interaction.response.send_message(
+                "You do not have access to this command!", ephemeral=True
+            )
 
 
 # Adding the cog to main script
