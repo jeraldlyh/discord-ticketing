@@ -31,6 +31,7 @@ class ModMail(commands.Bot):
         await self.change_presence(
             activity=discord.Activity(name="Your PMs", type=2)
         )
+        await self.sync_commands()
         time_now = datetime.datetime.now(tz=pytz.timezone("Asia/Singapore"))
         login_time = time_now.strftime("%d-%m-%Y %I:%M %p")
         print("-----------------")

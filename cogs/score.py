@@ -18,7 +18,7 @@ class Score(commands.Cog):
         description="Award a user up to 5 points",
     )
     @commands.has_any_role("Sponsor")
-    async def add(self, ctx: commands.Context, user: discord.Member, points: int = 1):
+    async def _add(self, ctx, user: discord.Member, points: int = 1):
         """Award a user with points up to 5 points"""
 
         try:
@@ -43,7 +43,7 @@ class Score(commands.Cog):
         description="Deduct points from a user",
     )
     @commands.has_any_role("Sponsor")
-    async def minus(self, ctx: commands.Context, user: discord.Member, points: int = 1):
+    async def _minus(self, ctx, user: discord.Member, points: int = 1):
         try:
             username = user.name
             is_user_exist = await self.firestore.is_user_exist(username)
@@ -69,16 +69,19 @@ class Score(commands.Cog):
         description="Display available commands",
     )
     @commands.has_any_role("Server Support")
-    async def help(self, ctx: commands.Context):
-        if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
+    async def _help(self, ctx):
+        await ctx.defer()
+
+        if ctx.interaction.channel != os.getenv("LOGGING_CHANNEL"):
             logs = discord.utils.get(
-                ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL")
+                ctx.guild.channels, name=os.getenv("LOGGING_CHANNEL")
             )
+            print(logs)
             embed = command_embed(
-                description=f"{ctx.message.author.mention} Commands can only be used in {logs.mention}",
+                description=f"{ctx.user.mention} Commands can only be used in {logs.mention}",
                 error=True,
             )
-            return await ctx.send(embed=embed)
+            return await ctx.respond(embed=embed)
 
         embed = discord.Embed(
             title="Available Commands",
@@ -90,11 +93,11 @@ class Score(commands.Cog):
         embed.description = "\n".join(
             [str(command) + " - " + str(command.help) for command in self.bot.commands]
         )
-        await ctx.send(embed=embed)
+        await ctx.respond(embed=embed)
 
     # @commands.command()
     # @commands.has_any_role("Sponsor")
-    # async def list(self, ctx: commands.Context):
+    # async def list(self, ctx):
     #     user_data = await self.firestore.get_all_users()
     #     field_value_count = 0
     #     username_value = ""
@@ -127,7 +130,7 @@ class Score(commands.Cog):
         name="list",
         description="Display user points",
     )
-    async def list(self, ctx: commands.Context):
+    async def _list(self, ctx):
         username = ctx.message.author.name
         user_doc = await self.firestore.get_user_doc(username)
 
@@ -135,7 +138,7 @@ class Score(commands.Cog):
             ctx, username, 0 if user_doc is None else user_doc["points"]
         )
 
-    async def send_scoreboard(self, ctx: commands.Context, usernames, points):
+    async def send_scoreboard(self, ctx, usernames, points):
         # embed = discord.Embed(title="Scoreboard")
         embed = discord.Embed(color=discord.Color.random())
 
