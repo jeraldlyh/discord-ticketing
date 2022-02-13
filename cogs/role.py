@@ -32,15 +32,15 @@ class Role(commands.Cog):
                     description=f"{role_mention} already exists with a reaction of {role_doc['emoji']}",
                     error=True,
                 )
-                return await ctx.send(embed=embed)
+                return await ctx.respond(embed=embed)
 
         if emoji not in UNICODE_EMOJI["en"]:
-            return await ctx.send(
+            return await ctx.respond(
                 embed=command_embed(description=f"{emoji} is not an emoji", error=True)
             )
 
         await self.firestore.create_role(role_id, role.name, emoji)
-        return await ctx.send(
+        return await ctx.respond(
             embed=command_embed(
                 description=f"Successfully created a role reaction with {emoji}"
             )
@@ -57,14 +57,14 @@ class Role(commands.Cog):
         role_doc = await self.firestore.get_role_doc(role_id)
 
         if role_doc is None:
-            return await ctx.send(
+            return await ctx.respond(
                 embed=command_embed(
                     description=f"{role.name} role does not exist", error=True
                 )
             )
 
         await self.firestore.delete_role(role_id)
-        return await ctx.send(
+        return await ctx.respond(
             embed=command_embed(description=f"Successfully deleted {role.name}")
         )
 
@@ -75,8 +75,8 @@ class Role(commands.Cog):
     )
     @commands.has_any_role("Server Support")
     async def block(self, ctx: commands.Context, user: discord.Member):
-        await self.firestore.block_user(user.name, is_blocked=True)
-        await ctx.send(
+        await self.firestore.block_user(str(user), is_blocked=True)
+        await ctx.respond(
             embed=command_embed(description=f"Sucessfully blocked {user.mention}")
         )
 
@@ -87,8 +87,8 @@ class Role(commands.Cog):
     )
     @commands.has_any_role("Server Support")
     async def unblock(self, ctx: commands.Context, user: discord.Member):
-        await self.firestore.block_user(user.name)
-        return await ctx.send(
+        await self.firestore.block_user(str(user))
+        return await ctx.respond(
             embed=command_embed(description=f"Sucessfully unblocked {user.mention}")
         )
 

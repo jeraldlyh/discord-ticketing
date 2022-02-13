@@ -2,8 +2,7 @@ import discord
 import os
 
 from discord.ext import commands
-from pprint import pprint
-from typing import Union
+from discord.commands import slash_command
 from cogs.view import TicketSupportView
 from cogs.firebase import Firestore
 
@@ -13,7 +12,11 @@ class Reaction(commands.Cog):
         self.bot = bot
         self.firestore = Firestore()
 
-    @commands.command()
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="add",
+        description="Award a user up to 5 points",
+    )
     @commands.has_permissions(administrator=True)
     async def react(self, ctx):
         guild = ctx.message.guild
@@ -33,7 +36,7 @@ If you have any questions or inquiries regarding the {str(os.getenv('TYPE'))}, p
             description += f"• Press `{role_emoji} {role_name}` to raise a ticket for {role_mention}\n"
 
         embed = discord.Embed(title=f"{guild.name} Support", description=description)
-        message = await ctx.send(embed=embed, view=view)
+        message = await ctx.respond(embed=embed, view=view)
 
         await self.firestore.register_ticket(str(message.id), True, str(ctx.author), "")
         self.bot.add_view(view)

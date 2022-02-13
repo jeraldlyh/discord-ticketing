@@ -18,7 +18,7 @@ class Setup(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def setup(self, ctx: commands.Context):
         if discord.utils.get(ctx.guild.categories, name=os.getenv("SUPPORT_CATEGORY")):
-            return await ctx.send("Server has already been set up.")
+            return await ctx.respond("Server has already been set up.")
 
         try:
             support = await ctx.guild.create_role(
@@ -41,13 +41,13 @@ class Setup(commands.Cog):
             embed = command_embed(
                 description=f"Channels have been setup. Please do not tamper with any roles/channels created by {self.bot.user.name}."
             )
-            return await ctx.send(embed=embed)
+            return await ctx.respond(embed=embed)
         except:
             embed = command_embed(
                 description="Do not have administrator permissions to setup the server.",
                 error=True,
             )
-            return await ctx.send(embed=embed)
+            return await ctx.respond(embed=embed)
 
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
@@ -70,14 +70,14 @@ class Setup(commands.Cog):
                 description=f"{ctx.message.author.mention} Commands can only be used in {logs_channel}",
                 error=True,
             )
-            return await ctx.send(embed=embed)
+            return await ctx.respond(embed=embed)
 
         support_category = discord.utils.get(
             ctx.guild.categories, name=os.getenv("SUPPORT_CATEGORY")
         )
         if not support_category:
             embed = command_embed(description="Server has not been setup.", error=True)
-            return await ctx.send(embed=embed)
+            return await ctx.respond(embed=embed)
 
         for channel in support_category.text_channels:
             await channel.delete()
