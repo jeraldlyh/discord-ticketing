@@ -24,22 +24,35 @@ class Modmail(commands.Cog):
             return await ctx.send("Server has already been set up.")
         else:
             try:
-                support = await ctx.guild.create_role(name="Server Support", color=discord.Color(0x72E4B2))
+                support = await ctx.guild.create_role(
+                    name="Server Support", color=discord.Color(0x72E4B2)
+                )
                 overwrite = {
-                    ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    ctx.guild.default_role: discord.PermissionOverwrite(
+                        read_messages=False
+                    ),
                     support: discord.PermissionOverwrite(read_messages=True),
                 }
-                category = await ctx.guild.create_category(name="📋 Support", overwrites=overwrite)
+                category = await ctx.guild.create_category(
+                    name="📋 Support", overwrites=overwrite
+                )
                 # await categ.edit(position=0)
-                channel = await ctx.guild.create_text_channel(name=os.getenv("LOGGING_CHANNEL"), category=category)
-                await channel.edit(topic="-block <userID> to block users.\n\n" "Blocked\n-------\n\n")
+                channel = await ctx.guild.create_text_channel(
+                    name=os.getenv("LOGGING_CHANNEL"), category=category
+                )
+                await channel.edit(
+                    topic="-block <userID> to block users.\n\n" "Blocked\n-------\n\n"
+                )
 
                 embed = command_embed(
                     description=f"Channels have been setup. Please do not tamper with any roles/channels created by {self.bot.user.name}."
                 )
                 return await ctx.send(embed=embed)
             except:
-                embed = command_embed(description="Do not have administrator permissions to setup the server.", error=True)
+                embed = command_embed(
+                    description="Do not have administrator permissions to setup the server.",
+                    error=True,
+                )
                 return await ctx.send(embed=embed)
 
     @commands.command()
@@ -48,7 +61,9 @@ class Modmail(commands.Cog):
         """Close all threads and disable modmail."""
 
         if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
-            logs_channel = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
+            logs_channel = discord.utils.get(
+                ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL")
+            )
 
             if logs_channel is None:
                 logs_channel = "#" + os.getenv("LOGGING_CHANNEL")
@@ -59,7 +74,7 @@ class Modmail(commands.Cog):
                 description=f"{ctx.message.author.mention} Commands can only be used in {logs_channel}"
             )
             return await ctx.send(embed=embed)
-    
+
         support_category = discord.utils.get(ctx.guild.categories, name="📋 Support")
         if not support_category:
             embed = command_embed(description="Server has not been setup.", error=True)
@@ -91,19 +106,34 @@ class Modmail(commands.Cog):
         """Close the current thread."""
 
         if "User ID:" not in str(ctx.channel.topic):
-            embed = command_embed(description="This is not a modmail thread.", error=True)
+            embed = command_embed(
+                description="This is not a modmail thread.", error=True
+            )
             return await ctx.send(embed=embed)
 
         user_id = int(ctx.channel.topic.split(": ")[1])
         user = self.bot.get_user(user_id)
 
-        log_channel = discord.utils.get(ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL"))
+        log_channel = discord.utils.get(
+            ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL")
+        )
 
-        await log_channel.send(embed=close_modmail_embed(user.name, ctx.author, ctx.message.created_at, is_log=True))
-        await user.send(embed=close_modmail_embed(user.name, ctx.author, ctx.message.created_at))
+        await log_channel.send(
+            embed=close_modmail_embed(
+                user.name, ctx.author, ctx.message.created_at, is_log=True
+            )
+        )
+        await user.send(
+            embed=close_modmail_embed(user.name, ctx.author, ctx.message.created_at)
+        )
         await ctx.channel.delete()
 
-    async def send_mail(self, message: discord.Message, channel: Union[discord.TextChannel, discord.User], is_moderator: bool):
+    async def send_mail(
+        self,
+        message: discord.Message,
+        channel: Union[discord.TextChannel, discord.User],
+        is_moderator: bool,
+    ):
         """Sends message to modmail channel for specific user"""
 
         author = message.author
@@ -145,12 +175,9 @@ class Modmail(commands.Cog):
 
         await self.send_mail(message, user, is_moderator=True)
 
-    async def validate_blocked_user(self, message, category):
-        bot_info_channel = category.channels[0]  # By default, bot-info
-        blocked = bot_info_channel.topic.split("Blocked\n-------")[1].strip().split("\n")
-        blocked = [x.strip() for x in blocked]
-
-        if str(message.author.id) in blocked:
+    async def validate_blocked_user(self, message: discord.Message):
+        user = self.firestore.get_user_doc(str(message.author))
+        if user["is_blocked"]:
             return await message.author.send(embed=blocked_embed)
 
     async def process_modmail(self, message: discord.Message):
@@ -160,14 +187,16 @@ class Modmail(commands.Cog):
 
         guild = discord.utils.get(self.bot.guilds, id=int(os.getenv("GUILD_ID")))
         support_category = discord.utils.get(guild.categories, name="📋 Support")
-        await self.validate_blocked_user(message, support_category)
-        
+        await self.validate_blocked_user(message)
+
         author = message.author
         topic = f"User ID: {author.id}"
         channel = discord.utils.get(guild.text_channels, topic=topic)
 
         embed = discord.Embed(title="Thanks for the message!")
-        embed.description = "The moderation team will get back to you as soon as possible!"
+        embed.description = (
+            "The moderation team will get back to you as soon as possible!"
+        )
         embed.color = discord.Color.green()
 
         if channel is not None:
@@ -188,8 +217,7 @@ class Modmail(commands.Cog):
         support = discord.utils.get(guild.roles, name="Server Support")
 
         await modmail_channel.send(
-            f"{support.mention}",
-            embed=format_info(guild, message)
+            f"{support.mention}", embed=format_info(guild, message)
         )
         await self.send_mail(message, modmail_channel, is_moderator=False)
 
