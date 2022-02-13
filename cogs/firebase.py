@@ -134,7 +134,7 @@ class Firestore():
         return None if not data else data[0]
     
     async def get_last_view_message(self):
-        messages = self.db.collection(self.MESSAGE_COLLECTION).order_by("last_added", direction=firestore.Query.DESCENDING).limit(1)
+        messages = self.db.collection(self.MESSAGE_COLLECTION).order_by("last_updated", direction=firestore.Query.DESCENDING).limit(1)
         docs = messages.stream()
         data = [doc.to_dict() async for doc in docs]
 
