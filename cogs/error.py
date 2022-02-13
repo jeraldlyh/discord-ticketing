@@ -29,6 +29,9 @@ class Error(commands.Cog):
             return await ctx.interaction.response.send_message(
                 "You do not have access to this command!", ephemeral=True
             )
+        return await ctx.interaction.response.send_message(
+            "Something went wrong, contact the admins!", ephemeral=True
+        )
 
 
 # Adding the cog to main script
