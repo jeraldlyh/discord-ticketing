@@ -7,8 +7,8 @@ from cogs.utils.embed import command_embed
 
 
 class Setup(commands.Cog):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -76,11 +76,9 @@ class Setup(commands.Cog):
             return await ctx.send(embed=embed)
 
         for channel in support_category.text_channels:
-            if channel.name != os.getenv("LOGGING_CHANNEL"):
-                await channel.delete()
+            await channel.delete()
 
         await support_category.delete()
-        await ctx.send(embed=command_embed(description="Disabled Modmail."))
 
     def load_cogs(self):
         for filename in os.listdir("./cogs"):
