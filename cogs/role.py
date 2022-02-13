@@ -16,7 +16,7 @@ class Role(commands.Cog):
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
         name="add_role",
-        description="Register a role with specified emoji that listens to reaction",
+        description="Register a role with specified emoji that appears as a button on interaction message",
     )
     @commands.has_any_role("Server Support")
     async def _add_role(self, ctx, role: discord.Role, emoji: str):
@@ -49,7 +49,7 @@ class Role(commands.Cog):
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
         name="remove_role",
-        description="Delete a role that listens to reaction",
+        description="Delete a role that on interaction message",
     )
     @commands.has_any_role("Server Support")
     async def _delete_role(self, ctx, role: discord.Role):

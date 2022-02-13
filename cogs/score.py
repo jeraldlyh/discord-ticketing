@@ -108,7 +108,7 @@ class Score(commands.Cog):
         description="Display user points",
     )
     async def _list(self, ctx):
-        username = ctx.message.author.name
+        username = str(ctx.author)
         user_doc = await self.firestore.get_user_doc(username)
 
         return await self.send_scoreboard(
@@ -119,7 +119,7 @@ class Score(commands.Cog):
         # embed = discord.Embed(title="Scoreboard")
         embed = discord.Embed(color=discord.Color.random())
 
-        embed.add_field(name="Username", value=usernames, inline=True)
+        # embed.add_field(name="Username", value=usernames, inline=True)
         embed.add_field(name="Points", value=points, inline=True)
         return await ctx.respond(embed=embed)
 
