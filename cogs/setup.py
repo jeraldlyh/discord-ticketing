@@ -1,7 +1,7 @@
 import os
 import discord
 
-
+from discord.commands import slash_command
 from discord.ext import commands
 from cogs.utils.embed import command_embed
 
@@ -10,11 +10,13 @@ class Setup(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="setup",
+        description="Sets up a server for ticketing system",
+    )
     @commands.has_permissions(administrator=True)
     async def setup(self, ctx: commands.Context):
-        """Sets up a server for ticketing system"""
-
         if discord.utils.get(ctx.guild.categories, name=os.getenv("SUPPORT_CATEGORY")):
             return await ctx.send("Server has already been set up.")
 
@@ -47,11 +49,13 @@ class Setup(commands.Cog):
             )
             return await ctx.send(embed=embed)
 
-    @commands.command()
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="disable",
+        description="Close all tickets and disable ticketing system",
+    )
     @commands.has_permissions(administrator=True)
     async def disable(self, ctx: commands.Context):
-        """Close all threads and disable modmail."""
-
         if ctx.message.channel.name != os.getenv("LOGGING_CHANNEL"):
             logs_channel = discord.utils.get(
                 ctx.message.guild.channels, name=os.getenv("LOGGING_CHANNEL")
@@ -89,6 +93,7 @@ class Setup(commands.Cog):
                     print(f"Loaded {cog}")
             except Exception as e:
                 print(e)
+
 
 # Adding the cog to main script
 def setup(bot):
