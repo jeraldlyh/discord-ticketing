@@ -1,12 +1,56 @@
+from pprint import pprint
 import discord
 import os
 
-from discord.ui import Button, View
 from typing import Union
 from cogs.firebase import Firestore
 
 
-class TicketView(View):
+class ConfirmationView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=3)
+
+    @discord.ui.button(
+        label="Yes",
+        style=discord.ButtonStyle.green,
+        custom_id="yes",
+    )
+    async def accept(self, button: discord.ui.Button, interaction: discord.Interaction):
+        user = interaction.user
+        channel = interaction.channel
+
+        role = discord.utils.get(interaction.guild.roles, id=int(channel.topic))
+
+        log_channel = discord.utils.get(
+            interaction.guild.channels, name=os.getenv("LOGGING_CHANNEL")
+        )
+
+        await log_channel.send(
+            embed=self.ticket_log_embed(user.name, role=role, is_log=True)
+        )
+        await user.send(embed=self.ticket_log_embed(user.name, role=role, is_log=False))
+        await channel.delete()
+
+    @discord.ui.button(
+        label="No",
+        style=discord.ButtonStyle.red,
+        custom_id="no",
+    )
+    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.message.delete(delay=5)
+    
+    async def on_timeout(self):
+        pprint(vars(self))
+
+    def ticket_log_embed(self, user: str, role: str, is_log=False):
+        return discord.Embed(
+            title=f"{user}'s Ticket Closed" if is_log else "Ticket Closed",
+            description=f"The ticket for {role} has just been closed.",
+            color=discord.Color.red() if is_log else discord.Color(0xFFD700),
+        )
+
+
+class TicketView(discord.ui.View):
     def __init__(self, role_id: int):
         super().__init__(timeout=None)
         self.role_id = role_id
@@ -18,7 +62,7 @@ class TicketView(View):
         custom_id="claim",
         emoji="🔓",
     )
-    async def claim(self, button: Button, interaction: discord.Interaction):
+    async def claim(self, button: discord.ui.Button, interaction: discord.Interaction):
         user = interaction.user
 
         # Validates if user have support role to access claim functionality or ticket has previously been claimed
@@ -42,9 +86,10 @@ class TicketView(View):
         label="Close",
         style=discord.ButtonStyle.red,
         custom_id="close",
-        emoji="🔓",
+        emoji="🔐",
     )
-    async def close(self, button: Button, interaction: discord.Interaction):
+    async def close(self, button: discord.ui.Button, interaction: discord.Interaction):
+        # TODO - Close ticket
         user = interaction.user
 
         if (
@@ -52,6 +97,10 @@ class TicketView(View):
             and interaction.channel.name != str(user).replace("#", "").lower()
         ):
             return
+
+        return await interaction.channel.send(
+            embed=self.confirmation_embed(), view=ConfirmationView()
+        )
 
     def is_interaction_allowed(self, user: Union[discord.User, discord.Member]):
         # Validates if user have support role to access claim functionality
@@ -61,12 +110,17 @@ class TicketView(View):
         )
 
     def claim_embed(self, user: Union[discord.User, discord.Member]):
-        embed = discord.Embed(color=discord.Color.green(), title="Ticket Claimed")
-        embed.description = f"{user.mention} will be assisting you on the issue!"
-        return embed
+        return discord.Embed(
+            description=f"{user.mention} will be assisting you on the issue!",
+            color=discord.Color.green(),
+            title="Ticket Claimed",
+        )
+
+    def confirmation_embed(self):
+        return discord.Embed(description="Are you sure you want to close this ticket?")
 
 
-class CustomButton(Button):
+class CustomButton(discord.ui.Button):
     def __init__(
         self,
         ctx,
@@ -166,7 +220,7 @@ Kindly click on the `🔒 Close` button to close the current ticket first!
         return embed
 
 
-class TicketSupportView(View):
+class TicketSupportView(discord.ui.View):
     def __init__(self, ctx, roles, guild: discord.Guild, firestore: Firestore):
         super().__init__(timeout=None)
         self.roles = roles
