@@ -7,7 +7,7 @@ from cogs.firebase import Firestore
 
 class TicketView(View):
     def __init__(self):
-        super().__init__()
+        super().__init__(timeout=None)
 
     @discord.ui.button(
         label="Claim",
@@ -17,6 +17,7 @@ class TicketView(View):
     )
     async def claim(self, button: Button, interaction: discord.Interaction):
         user = interaction.user
+        print(user, user.roles)
 
         message = interaction.message
         pass
@@ -52,26 +53,26 @@ class CustomButton(Button):
         self.id = id
         self.ctx = ctx
         self.guild = guild
-        self.firestore = Firestore()
+        self.firestore = firestore
 
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user
-        user_doc = self.firestore.get_user_doc(str(user))
+        user_doc = await self.firestore.get_user_doc(str(user))
 
-        if user_doc["is_blocked"]:
-            return await user.send(embed=self.blocked_embed)
+        # Ignore blocked users
+        if user_doc is not None and user_doc["is_blocked"]:
+            return await user.send(embed=self.blocked_embed())
 
         channel = discord.utils.get(
             self.guild.channels,
             name=str(user).replace("#", "").lower(),
         )  # i.e. xDevolution#3059 -> xdevolution3059
 
-        # Retrieve ticket role ID in channel topic
-        role = discord.utils.get(self.guild.roles, id=int(channel.topic))
-
         # Verifies if existing channel has been created
         if channel is not None:
-            return await channel.send(embed=self.error_embed(user, role))
+            # Retrieve ticket role ID in channel topic
+            role = discord.utils.get(self.guild.roles, id=int(channel.topic))
+            return await channel.send(embed=self.error_embed(role))
 
         role = discord.utils.get(self.guild.roles, id=int(self.id))
         support_category = discord.utils.get(self.guild.categories, name="📋 Support")
@@ -89,7 +90,8 @@ class CustomButton(Button):
         )
         await channel.edit(topic=role.id)  # Set ticket role ID in channel topic
         embed = self.ticket_embed(user, role)
-        return await channel.send(embed=embed, view=TicketView())
+        message = await channel.send(embed=embed, view=TicketView())
+        return await self.firestore.register_reaction_message(str(message.id), False)
 
     def ticket_embed(
         self, user: Union[discord.Member, discord.User], role: discord.Role
@@ -110,20 +112,19 @@ If you have accidentally opened a ticket or wish to close this ticket, kindly cl
 """
         return embed
 
-    def error_embed(
-        self, user: Union[discord.Member, discord.User], role: discord.Role
-    ):
+    def error_embed(self, role: discord.Role):
         embed = discord.Embed(color=discord.Color.red())
         embed.description = f"""
 You currently have an open ticket for {role.mention}!
 
-Kindly click on the `🔒 Close` button to close the current ticket first.
+Kindly click on the `🔒 Close` button to close the current ticket first!
 """
         return embed
-    
+
     def blocked_embed(self):
-        embed = discord.Embed(title="Message not processed!", color=discord.Color.red())
+        embed = discord.Embed(title="Ticket not raised!", color=discord.Color.red())
         embed.description = "You have been blocked from using modmail."
+        embed.set_footer(text="Kindly contact a server support regarding this issue")
         return embed
 
 

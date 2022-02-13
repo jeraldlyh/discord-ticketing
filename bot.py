@@ -6,7 +6,7 @@ import firebase_admin
 
 from dotenv import load_dotenv
 from cogs.firebase import Firestore
-from cogs.view import TicketSupportView
+from cogs.view import TicketSupportView, TicketView
 from discord.ext import commands
 
 
@@ -37,16 +37,24 @@ class ModMail(commands.Bot):
 
         # Reloads persistent view upon relaunching
         db = Firestore()
-        last_view_message = await db.get_last_view_message()
+        available_messages = await db.get_available_reaction_messages()
         roles = await db.get_all_roles()
         guild = discord.utils.get(self.guilds, id=int(os.getenv("GUILD_ID")))
 
-        if last_view_message is not None:
-            print(f"Adding persistent view to {last_view_message['id']}")
-            self.add_view(
-                view=TicketSupportView(self, roles, guild, db),
-                message_id=int(last_view_message["id"]),
-            )
+        if available_messages:
+            for message in available_messages:
+                if message["is_root"]:
+                    print(f"Adding persistent root view to {message['id']}")
+                    self.add_view(
+                        view=TicketSupportView(self, roles, guild, db),
+                        message_id=int(message["id"]),
+                    )
+                else:
+                    print(f"Adding persistent view to {message['id']}")
+                    self.add_view(
+                        view=TicketView(),
+                        message_id=int(message["id"]),
+                    )
 
         time_now = datetime.datetime.now(tz=pytz.timezone("Asia/Singapore"))
         login_time = time_now.strftime("%d-%m-%Y %I:%M %p")

@@ -15,7 +15,6 @@ class Reaction(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def react(self, ctx):
-        pprint(vars(ctx))
         guild = ctx.message.guild
         embed = discord.Embed(title=f"{guild.name} Support")
         roles = await self.firestore.get_all_roles()
@@ -35,7 +34,7 @@ If you have any questions or inquiries regarding the {str(os.getenv('TYPE'))}, p
         embed.description = description
 
         message = await ctx.send(embed=embed, view=view)
-        await self.firestore.register_reaction_message(str(message.id))
+        await self.firestore.register_reaction_message(str(message.id), True)
         self.bot.add_view(view)
 
 

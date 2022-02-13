@@ -113,8 +113,13 @@ class Firestore:
     def get_message_doc_ref(self, message_id: str):
         return self.db.collection(self.MESSAGE_COLLECTION).document(message_id)
 
-    async def register_reaction_message(self, message_id: str):
-        message_doc = {"id": message_id, "last_updated": firestore.SERVER_TIMESTAMP}
+    async def register_reaction_message(self, message_id: str, is_root: bool):
+        message_doc = {
+            "id": message_id,
+            "last_updated": firestore.SERVER_TIMESTAMP,
+            "is_available": True,
+            "is_root": is_root,
+        }
 
         doc_ref = self.get_message_doc_ref(message_id)
         await doc_ref.set(message_doc)
@@ -136,13 +141,11 @@ class Firestore:
 
         return None if not data else data[0]
 
-    async def get_last_view_message(self):
+    async def get_available_reaction_messages(self):
         messages = (
             self.db.collection(self.MESSAGE_COLLECTION)
-            .order_by("last_updated", direction=firestore.Query.DESCENDING)
-            .limit(1)
+            .where("is_available", "==", True)
         )
         docs = messages.stream()
-        data = [doc.to_dict() async for doc in docs]
 
-        return None if not data else data[0]
+        return [doc.to_dict() async for doc in docs]
