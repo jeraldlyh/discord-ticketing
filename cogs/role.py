@@ -36,14 +36,16 @@ class Role(commands.Cog):
                 return await ctx.send(embed=embed)
 
         if emoji not in UNICODE_EMOJI["en"]:
-            embed = command_embed(description=f"{emoji} is not an emoji", error=True)
-            return await ctx.send(embed=embed)
+            return await ctx.send(
+                embed=command_embed(description=f"{emoji} is not an emoji", error=True)
+            )
 
         await self.firestore.create_role(role_id, role.name, emoji)
-        embed = command_embed(
-            description=f"Successfully created a role reaction with {emoji}"
+        return await ctx.send(
+            embed=command_embed(
+                description=f"Successfully created a role reaction with {emoji}"
+            )
         )
-        return await ctx.send(embed=embed)
 
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
@@ -56,14 +58,16 @@ class Role(commands.Cog):
         role_doc = await self.firestore.get_role_doc(role_id)
 
         if role_doc is None:
-            embed = command_embed(
-                description=f"{role.name} role does not exist", error=True
+            return await ctx.send(
+                embed=command_embed(
+                    description=f"{role.name} role does not exist", error=True
+                )
             )
-            return await ctx.send(embed=embed)
 
         await self.firestore.delete_role(role_id)
-        embed = command_embed(description=f"Successfully deleted {role.name}")
-        return await ctx.send(embed=embed)
+        return await ctx.send(
+            embed=command_embed(description=f"Successfully deleted {role.name}")
+        )
 
 
 # Adding the cog to main script

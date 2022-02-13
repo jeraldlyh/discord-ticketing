@@ -38,7 +38,7 @@ class ConfirmationView(discord.ui.View):
     )
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.message.delete(delay=5)
-    
+
     async def on_timeout(self):
         pprint(vars(self))
 
@@ -99,7 +99,9 @@ class TicketView(discord.ui.View):
             return
 
         return await interaction.channel.send(
-            embed=self.confirmation_embed(), view=ConfirmationView()
+            content=user.mention,
+            embed=self.confirmation_embed(),
+            view=ConfirmationView(),
         )
 
     def is_interaction_allowed(self, user: Union[discord.User, discord.Member]):
@@ -188,8 +190,8 @@ class CustomButton(discord.ui.Button):
     def ticket_embed(
         self, user: Union[discord.Member, discord.User], role: discord.Role
     ):
-        embed = discord.Embed()
-        embed.description = f"""
+        return discord.Embed(
+            description=f"""
 Hey {user.mention}, thanks for reaching out to {role.mention}
 
 ```fix
@@ -202,20 +204,24 @@ Please refrain from pinging {role.mention} to speed up the request as this goes 
 
 If you have accidentally opened a ticket or wish to close this ticket, kindly click on the `🔒 Close` button.
 """
-        return embed
+        )
 
     def error_embed(self, role: discord.Role):
-        embed = discord.Embed(color=discord.Color.red())
-        embed.description = f"""
+        return discord.Embed(
+            description=f"""
 You currently have an open ticket for {role.mention}!
 
 Kindly click on the `🔒 Close` button to close the current ticket first!
-"""
-        return embed
+""",
+            color=discord.Color.red(),
+        )
 
     def blocked_embed(self):
-        embed = discord.Embed(title="Ticket not raised!", color=discord.Color.red())
-        embed.description = "You have been blocked from using modmail."
+        embed = discord.Embed(
+            title="Ticket not raised!",
+            description="You have been blocked from using modmail.",
+            color=discord.Color.red(),
+        )
         embed.set_footer(text="Kindly contact a server support regarding this issue")
         return embed
 

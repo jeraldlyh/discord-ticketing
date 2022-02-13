@@ -7,6 +7,7 @@ from typing import Union
 from cogs.view import TicketSupportView
 from cogs.firebase import Firestore
 
+
 class Reaction(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -16,7 +17,6 @@ class Reaction(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def react(self, ctx):
         guild = ctx.message.guild
-        embed = discord.Embed(title=f"{guild.name} Support")
         roles = await self.firestore.get_all_roles()
         view = TicketSupportView(ctx, roles, guild, self.firestore)
 
@@ -31,9 +31,10 @@ If you have any questions or inquiries regarding the {str(os.getenv('TYPE'))}, p
 
             role_mention = discord.utils.get(guild.roles, id=int(role["id"])).mention
             description += f"• Press `{role_emoji} {role_name}` to raise a ticket for {role_mention}\n"
-        embed.description = description
 
+        embed = discord.Embed(title=f"{guild.name} Support", description=description)
         message = await ctx.send(embed=embed, view=view)
+
         await self.firestore.register_ticket(str(message.id), True, str(ctx.author), "")
         self.bot.add_view(view)
 
