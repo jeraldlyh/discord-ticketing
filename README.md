@@ -1,5 +1,5 @@
 ## Overview
-This is a rewrite version of [discord-modmail](https://github.com/jeraldlyh/discord-modmail) due to the breaking changes released by Discord where all bots are expected to migrate over to Slash Commands by April 2022. Discord modmail serves as a shared inbox for server moderators to communicate with users in a seamless way.
+This is a rewrite version of [discord-modmail](https://github.com/jeraldlyh/discord-modmail) due to the breaking changes released by Discord where all bots are expected to migrate over to Slash Commands by April 2022. Discord ticketing serves as a shared inbox for server moderators to communicate with users in a seamless way via a ticketing system.
 
 ## How does it work?
 User is able to raise a ticket by interacting with the buttons on a support message which consists of various support categories configured by the server. A subsequent text channel will be created between both the user and support staffs that has the corresponding role belonging to the support category.
@@ -18,6 +18,7 @@ User is able to raise a ticket by interacting with the buttons on a support mess
 
 ## Notes
 -   Moderators must be assigned a support role (specified in environment variables) to access the commands.
+-   Sponsors commands are a requested feature for a specific use case. `@Sponsor` roles are required to access these commands.
 
 ## Environment Variables
 | Name                 | Description                                                                             |
