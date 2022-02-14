@@ -19,7 +19,7 @@ class Reaction(commands.Cog):
     )
     @commands.has_permissions(administrator=True)
     async def react(self, ctx):
-        guild = ctx.message.guild
+        guild = ctx.guild
         roles = await self.firestore.get_all_roles()
         view = TicketSupportView(ctx, roles, guild, self.firestore)
 
