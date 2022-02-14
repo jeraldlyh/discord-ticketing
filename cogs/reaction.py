@@ -35,8 +35,11 @@ If you have any questions or inquiries regarding the {str(os.getenv('TYPE'))}, p
             role_mention = discord.utils.get(guild.roles, id=int(role["id"])).mention
             description += f"• Press `{role_emoji} {role_name}` to raise a ticket for {role_mention}\n"
 
-        embed = discord.Embed(title=f"{guild.name} Support", description=description)
-        message = await ctx.respond(embed=embed, view=view)
+        response = await ctx.respond(
+            embed=discord.Embed(title=f"{guild.name} Support", description=description),
+            view=view,
+        )
+        message = await response.original_message()
 
         await self.firestore.register_ticket(str(message.id), True, str(ctx.author), "")
         self.bot.add_view(view)
