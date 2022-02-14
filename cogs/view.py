@@ -43,7 +43,7 @@ from cogs.firebase import Firestore
 
 #     async def on_timeout(self):
 #         raise Exception("here")
-    
+
 #     async def on_error(self, error, item, interaction):
 #         # print(str(error))
 #         await interaction.response.send_message(str(error))
@@ -100,12 +100,15 @@ class TicketView(discord.ui.View):
         user = interaction.user
         channel = interaction.channel
 
+        # TODO - Add an interaction response?
+        await interaction.response.defer()  # Defer and ignore interaction response
+
         if (
             not self.is_interaction_allowed(user)
             and channel.name != str(user).replace("#", "").lower()
         ):
             return
-        
+
         role = discord.utils.get(interaction.guild.roles, id=int(channel.topic))
 
         log_channel = discord.utils.get(
@@ -141,7 +144,7 @@ class TicketView(discord.ui.View):
 
     def confirmation_embed(self):
         return discord.Embed(description="Are you sure you want to close this ticket?")
-    
+
     def ticket_log_embed(self, user: str, role: str, is_log=False):
         return discord.Embed(
             title=f"{user}'s Ticket Closed" if is_log else "Ticket Closed",
@@ -188,7 +191,9 @@ class CustomButton(discord.ui.Button):
         if channel is not None:
             # Retrieve ticket role ID in channel topic
             role = discord.utils.get(self.guild.roles, id=int(channel.topic))
-            return await channel.send(embed=self.error_embed(role))
+            return await channel.send(
+                content=user.mention, embed=self.error_embed(role)
+            )
 
         role = discord.utils.get(self.guild.roles, id=int(self.id))
         support_category = discord.utils.get(self.guild.categories, name="📋 Support")
@@ -211,6 +216,16 @@ class CustomButton(discord.ui.Button):
             embed=embed,
             view=TicketView(role.id, self.firestore),
         )
+
+        # Respond to interaction to prevent 404 Unknown Interaction
+        await interaction.response.send_message(
+            content=user.mention,
+            embed=discord.Embed(
+                description=f"You can find your ticket at {channel.mention}"
+            ),
+            delete_after=10,
+        )
+
         return await self.firestore.register_ticket(
             str(message.id), False, str(user), str(role.id)
         )
