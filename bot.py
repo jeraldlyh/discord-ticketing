@@ -33,7 +33,7 @@ class ModMail(commands.Bot):
     async def on_ready(self):
         self.remove_command("help")
         self.load_cogs()
-        await self.change_presence(activity=discord.Activity(name="Your PMs", type=2))
+        await self.change_presence(activity=discord.Activity(name="your tickets", type=2))
         await self.sync_commands(force=True)
 
         # Reloads persistent view upon relaunching
