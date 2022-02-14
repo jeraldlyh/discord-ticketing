@@ -57,6 +57,8 @@ class ModMail(commands.Bot):
                         message_id=int(ticket["id"]),
                     )
 
+        await self.wait_until_ready()
+
         time_now = datetime.datetime.now(tz=pytz.timezone("Asia/Singapore"))
         login_time = time_now.strftime("%d-%m-%Y %I:%M %p")
         print("-----------------")
