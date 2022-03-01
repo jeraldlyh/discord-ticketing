@@ -1,7 +1,8 @@
 from firebase_admin import firestore
+from cogs.exception import MaxPointsError
 
 DEFAULT_PROFILE = {
-    "points": 0,
+    "points": {},
     "is_blocked": False,
     "last_updated": firestore.SERVER_TIMESTAMP,
 }
@@ -23,7 +24,6 @@ class Firestore:
         is_user_exist = await self.is_user_exist(username)
         if not is_user_exist:
             await self.create_user(username)
-            return None
 
         doc_ref = self.get_user_doc_ref(username)
         doc = await doc_ref.get()
@@ -39,17 +39,20 @@ class Firestore:
         doc_ref = self.get_user_doc_ref(username)
         await doc_ref.set(DEFAULT_PROFILE)
 
-    async def add_points(self, username: str, points: int):
+    async def add_points(self, username: str, points: int, role: str):
         if points < 1 or points > 5:
             raise SyntaxError("Points must be within 1 to 5")
 
+        user_doc = await self.get_user_doc(username)
+
+        if role in user_doc["points"] and user_doc["points"][role] == 6:
+            raise MaxPointsError(f"User already has 6 points from {role}")
+
         doc_ref = self.get_user_doc_ref(username)
-        await doc_ref.update(
-            {
-                "points": firestore.Increment(points),
+        await doc_ref.update({
+                f"points.`{str(role)}`": firestore.Increment(points),
                 "last_updated": firestore.SERVER_TIMESTAMP,
-            }
-        )
+            })
 
     async def minus_points(self, username: str, points: int):
         if points < 1 or points > 5:

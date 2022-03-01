@@ -4,6 +4,7 @@ import os
 from discord.ext import commands
 from discord.commands import slash_command, Option
 from cogs.utils.embed import command_embed, insufficient_points_embed
+from cogs.exception import MaxPointsError
 from cogs.firebase import Firestore
 
 
@@ -21,23 +22,25 @@ class Score(commands.Cog):
     async def _add(
         self,
         ctx,
-        user: discord.Member,
-        points: Option(int, "Enter a number between 1 to 5", required=False, default=1),
+        user: Option(discord.Member, "Enter a Discord user", required=True),
+        points: Option(int, "Enter a number between 1 to 5", min=1, max=5, required=False, default=1),
     ):
-        """Award a user with points up to 5 points"""
-
         try:
+            await ctx.interaction.response.defer()
             username = str(user)
+            role = [role for role in ctx.author.roles if role.name != ctx.guild.default_role.name and role.name != "Sponsor"][0]
 
-            await self.firestore.get_user_doc(username)
-            await self.firestore.add_points(username, points)
-            return await ctx.respond(
+            await self.firestore.add_points(username, points, str(role))
+            return await ctx.interaction.response.send_message(
                 embed=command_embed(
                     description=f"Successfully added {points} point to {user.mention}"
-                )
+                ),
+                ephemeral=True
             )
-        except SyntaxError as e:
+        except MaxPointsError as e:
             return await ctx.respond(embed=command_embed(description=str(e), error=True))
+        except Exception as e:
+            return await ctx.respond(str(e))
 
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
@@ -48,7 +51,7 @@ class Score(commands.Cog):
     async def _minus(
         self,
         ctx,
-        user: discord.Member,
+        user: Option(discord.Member, "Enter a Discord user"),
         points: Option(int, "Enter a positive number", required=False, default=1),
     ):
         try:
@@ -115,11 +118,11 @@ class Score(commands.Cog):
             ctx, username, 0 if user_doc is None else user_doc["points"]
         )
 
-    async def send_scoreboard(self, ctx, usernames, points):
+    async def send_scoreboard(self, ctx, points):
         # embed = discord.Embed(title="Scoreboard")
         embed = discord.Embed(color=discord.Color.random())
 
-        # embed.add_field(name="Username", value=usernames, inline=True)
+        embed.add_field(name="Username", value=ctx.author.mention, inline=True)
         embed.add_field(name="Points", value=points, inline=True)
         return await ctx.respond(embed=embed)
 
