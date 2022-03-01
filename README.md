@@ -9,9 +9,13 @@ User is able to raise a ticket by interacting with the buttons on a support mess
     -   `/setup` - Automatically sets up the ticketing module in the server
     -   `/disable` - Close all current threads and disable ticketing
     -   `/react` - Sends a message that listens for interactions with the buttons
+    -   `/create_flag <name> <points>` - Create a claimable flag with the specified points
+    -   `/delete_flag <name>` - Delete previously created flag
+    -   `/create_role <name> <emoji>` - Create a role with the specified emoji that will be displayed as a button on the main ticketing message
+    -   `/delete_role <name>` - Delete previously created role
 -   **Moderators**
-    -   `-block <user>` - Blocks specified user and prevent them from utilising ticketing system
-    -   `-unblock <user>` - Unblocks specified user
+    -   `/block <user>` - Blocks specified user and prevent them from utilising ticketing system
+    -   `/unblock <user>` - Unblocks specified user
 -   **Sponsors**
     -   `/add <user> <points>` - Awards point(s) (default = 1) to specified user
     -   `/minus <user> <points>` - Deducts point(s) (default = 1) from specified user
