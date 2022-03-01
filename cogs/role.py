@@ -2,7 +2,7 @@ import discord
 import os
 
 from discord.ext import commands
-from discord.commands import slash_command
+from discord.commands import slash_command, Option
 from emoji import UNICODE_EMOJI
 from cogs.utils.embed import command_embed, insufficient_points_embed
 from cogs.firebase import Firestore
@@ -19,7 +19,12 @@ class Role(commands.Cog):
         description="Register a role with specified emoji that appears as a button on interaction message",
     )
     @commands.has_any_role("Server Support")
-    async def _create_role(self, ctx, role: discord.Role, emoji: str):
+    async def _create_role(
+        self,
+        ctx,
+        role: Option(discord.Role, "Enter a Discord role", required=True),
+        emoji: Option(str, "Enter an emoji", required=True),
+    ):
         role_id = str(role.id)
         role_docs = await self.firestore.get_all_roles()
 
@@ -52,7 +57,9 @@ class Role(commands.Cog):
         description="Delete a role that on interaction message",
     )
     @commands.has_any_role("Server Support")
-    async def _delete_role(self, ctx, role: discord.Role):
+    async def _delete_role(
+        self, ctx, role: Option(discord.Role, "Enter a Discord role", required=True)
+    ):
         role_id = str(role.id)
         role_doc = await self.firestore.get_role_doc(role_id)
 
@@ -74,7 +81,11 @@ class Role(commands.Cog):
         description="Block a user from using ticketing system",
     )
     @commands.has_any_role("Server Support")
-    async def block(self, ctx: commands.Context, user: discord.Member):
+    async def block(
+        self,
+        ctx: commands.Context,
+        user: Option(discord.User, "Enter a Discord user", required=True),
+    ):
         await self.firestore.block_user(str(user), is_blocked=True)
         await ctx.respond(
             embed=command_embed(description=f"Sucessfully blocked {user.mention}")
@@ -86,7 +97,11 @@ class Role(commands.Cog):
         description="Unblock a user from using ticketing system",
     )
     @commands.has_any_role("Server Support")
-    async def unblock(self, ctx: commands.Context, user: discord.Member):
+    async def unblock(
+        self,
+        ctx: commands.Context,
+        user: Option(discord.User, "Enter a Discord user", required=True),
+    ):
         await self.firestore.block_user(str(user))
         return await ctx.respond(
             embed=command_embed(description=f"Sucessfully unblocked {user.mention}")
