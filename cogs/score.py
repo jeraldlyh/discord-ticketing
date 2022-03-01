@@ -144,7 +144,7 @@ class Score(commands.Cog):
         else:
             embed.add_field(name="Points", value=0, inline=True)
 
-        return await ctx.respond(embed=embed)
+        return await ctx.respond(embed=embed, ephemeral=True)
 
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
