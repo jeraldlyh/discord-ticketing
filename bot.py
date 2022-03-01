@@ -18,7 +18,7 @@ class ModMail(commands.Bot):
         super().__init__(
             command_prefix=commands.when_mentioned_or("-"), intents=intents
         )
-        self.IGNORE_FILES = ["firebase", "modmail", "view"]
+        self.IGNORE_FILES = ["firebase", "modmail", "view", "exception"]
 
     def load_cogs(self):
         for filename in os.listdir("./cogs"):
