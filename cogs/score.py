@@ -4,7 +4,7 @@ import os
 from discord.ext import commands
 from discord.commands import slash_command, Option
 from cogs.utils.embed import command_embed, insufficient_points_embed
-from cogs.exception import InsufficientPointsError, MaxPointsError
+from cogs.exception import InsufficientPointsError, MaxPointsError, NotFoundError
 from cogs.firebase import Firestore
 
 
@@ -33,7 +33,8 @@ class Score(commands.Cog):
         ),
     ):
         try:
-            await ctx.interaction.response.defer()
+            await ctx.interaction.response.defer(ephemeral=True)
+
             username = str(user)
             role = [
                 role
@@ -46,7 +47,6 @@ class Score(commands.Cog):
                 embed=command_embed(
                     description=f"Successfully added {points} point to {user.mention}"
                 ),
-                ephemeral=True,
             )
         except MaxPointsError as e:
             return await ctx.respond(
@@ -64,7 +64,7 @@ class Score(commands.Cog):
     async def _minus(
         self,
         ctx,
-        user: Option(discord.Member, "Enter a Discord user"),
+        user: Option(discord.Member, "Enter a Discord user", required=True),
         points: Option(
             int,
             "Enter a number between 1 to 5",
@@ -75,7 +75,7 @@ class Score(commands.Cog):
         ),
     ):
         try:
-            await ctx.interaction.response.defer()
+            await ctx.interaction.response.defer(ephemeral=True)
 
             username = str(user)
             role = [
@@ -83,8 +83,6 @@ class Score(commands.Cog):
                 for role in ctx.author.roles
                 if role.name != ctx.guild.default_role.name and role.name != "Sponsor"
             ][0]
-
-            print(role)
 
             await self.firestore.minus_points(username, points, str(role))
 
@@ -137,17 +135,97 @@ class Score(commands.Cog):
         username = str(ctx.author)
         user_doc = await self.firestore.get_user_doc(username)
 
-        return await self.send_scoreboard(
-            ctx, username, 0 if user_doc is None else user_doc["points"]
+        embed = discord.Embed(color=discord.Color.random())
+        embed.add_field(name="Username", value=ctx.author.mention, inline=False)
+
+        if user_doc["points"]:
+            for key, value in user_doc["points"].items():
+                embed.add_field(name=key, value=value, inline=True)
+        else:
+            embed.add_field(name="Points", value=0, inline=True)
+
+        return await ctx.respond(embed=embed)
+
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="create_flag",
+        description=f"Create {os.getenv('TYPE')} flag",
+    )
+    @commands.has_permissions(administrator=True)
+    async def _create_flag(
+        self,
+        ctx,
+        flag: Option(str, f"Enter a {os.getenv('TYPE')} flag", required=True),
+        points: Option(
+            int, "Enter number of points for flag", min_value=1, required=True
+        ),
+    ):
+        await self.firestore.create_flag(flag, points)
+        return await ctx.respond(
+            embed=command_embed(
+                description=f"Successfully created {flag} with {points} points"
+            )
         )
 
-    async def send_scoreboard(self, ctx, points):
-        # embed = discord.Embed(title="Scoreboard")
-        embed = discord.Embed(color=discord.Color.random())
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="delete_flag",
+        description=f"Delete {os.getenv('TYPE')} flag",
+    )
+    @commands.has_permissions(administrator=True)
+    async def _delete_flag(
+        self,
+        ctx,
+        flag: Option(str, f"Enter a {os.getenv('TYPE')} flag", required=True),
+    ):
+        flag_data = await self.firestore.get_flag_doc(flag)
+        if flag_data is None:
+            return await ctx.respond(
+                embed=command_embed(description=f"{flag} does not exist"), error=True
+            )
 
-        embed.add_field(name="Username", value=ctx.author.mention, inline=True)
-        embed.add_field(name="Points", value=points, inline=True)
-        return await ctx.respond(embed=embed)
+        await self.firestore.delete_flag(flag)
+        return await ctx.respond(
+            embed=command_embed(description=f"Successfully deleted {flag}")
+        )
+
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="flag",
+        description=f"Submit {os.getenv('TYPE')} flag",
+    )
+    async def _flag(
+        self, ctx, flag: Option(str, f"Enter a {os.getenv('TYPE')} flag", required=True)
+    ):
+        await ctx.interaction.response.defer(ephemeral=True)
+
+        flag_data = await self.firestore.get_flag_doc(flag)
+
+        if flag_data is None:
+            return await ctx.respond(
+                embed=command_embed(description=f"{flag} is invalid", error=True),
+                ephemeral=True,
+            )
+
+        username = str(ctx.author)
+        user_data = await self.firestore.get_user_doc(username)
+
+        if flag in user_data["points"]:
+            return await ctx.respond(
+                embed=command_embed(
+                    description=f"{ctx.author.mention} has already claimed this flag",
+                    error=True,
+                ),
+                ephemeral=True,
+            )
+
+        await self.firestore.add_points(str(ctx.author), flag_data["points"], flag)
+        return await ctx.respond(
+            embed=command_embed(
+                description=f"{ctx.author.mention} has successfully claimed {flag} for {flag_data['points']}"
+            ),
+            ephemeral=True,
+        )
 
 
 # Adding the cog to main script
