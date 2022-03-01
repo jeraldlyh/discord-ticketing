@@ -17,8 +17,11 @@ User is able to raise a ticket by interacting with the buttons on a support mess
     -   `/block <user>` - Blocks specified user and prevent them from utilising ticketing system
     -   `/unblock <user>` - Unblocks specified user
 -   **Sponsors**
-    -   `/add <user> <points>` - Awards point(s) (default = 1) to specified user
-    -   `/minus <user> <points>` - Deducts point(s) (default = 1) from specified user
+    -   `/add <user> [points]` - Awards point(s) (default = 1) to specified user
+    -   `/minus <user> [points]` - Deducts point(s) (default = 1) from specified user
+-   **Users**
+    -   `/list` - Display user points according to the points awarded by various flags and sponsors
+    -   `/flag <name>` - Submit a flag and earn points
 
 ## Notes
 -   Moderators must be assigned a support role (specified in environment variables) to access the commands.
