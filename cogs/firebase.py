@@ -1,5 +1,5 @@
 from firebase_admin import firestore
-from cogs.exception import MaxPointsError
+from cogs.exception import InsufficientPointsError, MaxPointsError
 
 DEFAULT_PROFILE = {
     "points": {},
@@ -42,24 +42,37 @@ class Firestore:
     async def add_points(self, username: str, points: int, role: str):
         user_doc = await self.get_user_doc(username)
 
-        if role in user_doc["points"] and user_doc["points"][role] == 6:
-            raise MaxPointsError(f"User already has 6 points from {role}")
-
-        doc_ref = self.get_user_doc_ref(username)
-        await doc_ref.update({
-                f"points.`{str(role)}`": firestore.Increment(points),
-                "last_updated": firestore.SERVER_TIMESTAMP,
-            })
-
-    async def minus_points(self, username: str, points: int):
-        user_doc = await self.get_user_doc(username)
-        if user_doc["points"] == 0:
-            raise ValueError("User has insufficient points")
+        if role in user_doc["points"]:
+            role_points = user_doc["points"][role]
+            if role_points > 6:
+                raise MaxPointsError(f"{username} already has 6 points from `{role}`")
+            elif role_points + points > 6:
+                raise MaxPointsError(
+                    f"{username} can only receive maximum of {6 - role_points} points"
+                )
 
         doc_ref = self.get_user_doc_ref(username)
         await doc_ref.update(
             {
-                "points": firestore.Increment(-points),
+                f"points.`{str(role)}`": firestore.Increment(points),
+                "last_updated": firestore.SERVER_TIMESTAMP,
+            }
+        )
+
+    async def minus_points(self, username: str, points: int, role: str):
+        user_doc = await self.get_user_doc(username)
+
+        if role not in user_doc["points"]:
+            raise InsufficientPointsError(f"{username} has yet to receive any points from `{role}`")
+
+        role_points = user_doc["points"][role]
+        if role_points - points < 0:
+            raise InsufficientPointsError(f"{username} only has `{role_points} points`")
+
+        doc_ref = self.get_user_doc_ref(username)
+        await doc_ref.update(
+            {
+                f"points.`{role}`": firestore.Increment(-points),
                 "last_updated": firestore.SERVER_TIMESTAMP,
             }
         )

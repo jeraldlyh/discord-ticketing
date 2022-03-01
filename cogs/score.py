@@ -4,7 +4,7 @@ import os
 from discord.ext import commands
 from discord.commands import slash_command, Option
 from cogs.utils.embed import command_embed, insufficient_points_embed
-from cogs.exception import MaxPointsError
+from cogs.exception import InsufficientPointsError, MaxPointsError
 from cogs.firebase import Firestore
 
 
@@ -42,7 +42,7 @@ class Score(commands.Cog):
             ][0]
 
             await self.firestore.add_points(username, points, str(role))
-            return await ctx.interaction.response.send_message(
+            return await ctx.respond(
                 embed=command_embed(
                     description=f"Successfully added {points} point to {user.mention}"
                 ),
@@ -65,26 +65,38 @@ class Score(commands.Cog):
         self,
         ctx,
         user: Option(discord.Member, "Enter a Discord user"),
-        points: Option(int, "Enter a positive number", required=False, default=1),
+        points: Option(
+            int,
+            "Enter a number between 1 to 5",
+            min_value=1,
+            max_value=5,
+            required=False,
+            default=1,
+        ),
     ):
         try:
-            if points < 0:
-                return await ctx.respond(
-                    embed=command_embed("Kindly enter a positive number!", error=True)
-                )
+            await ctx.interaction.response.defer()
 
             username = str(user)
+            role = [
+                role
+                for role in ctx.author.roles
+                if role.name != ctx.guild.default_role.name and role.name != "Sponsor"
+            ][0]
 
-            await self.firestore.get_user_doc(username)
-            await self.firestore.minus_points(username, points)
+            print(role)
+
+            await self.firestore.minus_points(username, points, str(role))
 
             return await ctx.respond(
                 embed=command_embed(
                     description=f"Successfully deducted {points} point from {user.mention}"
                 )
             )
-        except ValueError:
-            return await ctx.respond(embed=insufficient_points_embed(user))
+        except InsufficientPointsError as e:
+            return await ctx.respond(
+                embed=command_embed(description=str(e), error=True)
+            )
 
     # @commands.command()
     # @commands.has_any_role("Sponsor")
