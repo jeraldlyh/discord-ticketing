@@ -30,6 +30,7 @@ User is able to raise a ticket by interacting with the buttons on a support mess
 | `TYPE`               | Type of support that the server is providing (i.e. CTF, Hackathons)                     |
 | `SUPPORT_ROLE`       | Name of support role to access the bot                                                  |
 | `SUPPORT_CATEGORY`   | Name of support category to for ticket logs                                             |
+| `MAX_POINTS`         | Maximum number of points sponsors can award to the user                                 |
 
 
 ## Local Deployment
