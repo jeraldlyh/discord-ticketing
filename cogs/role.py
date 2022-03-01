@@ -15,11 +15,11 @@ class Role(commands.Cog):
 
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
-        name="add_role",
+        name="create_role",
         description="Register a role with specified emoji that appears as a button on interaction message",
     )
     @commands.has_any_role("Server Support")
-    async def _add_role(self, ctx, role: discord.Role, emoji: str):
+    async def _create_role(self, ctx, role: discord.Role, emoji: str):
         role_id = str(role.id)
         role_docs = await self.firestore.get_all_roles()
 
@@ -48,7 +48,7 @@ class Role(commands.Cog):
 
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
-        name="remove_role",
+        name="delete_role",
         description="Delete a role that on interaction message",
     )
     @commands.has_any_role("Server Support")
