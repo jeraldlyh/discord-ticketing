@@ -163,7 +163,7 @@ class Score(commands.Cog):
         await self.firestore.create_flag(flag, points)
         return await ctx.respond(
             embed=command_embed(
-                description=f"Successfully created {flag} with {points} points"
+                description=f"Successfully created `{flag}` with `{points} points`"
             )
         )
 
@@ -181,12 +181,12 @@ class Score(commands.Cog):
         flag_data = await self.firestore.get_flag_doc(flag)
         if flag_data is None:
             return await ctx.respond(
-                embed=command_embed(description=f"{flag} does not exist"), error=True
+                embed=command_embed(description=f"`{flag}` does not exist"), error=True
             )
 
         await self.firestore.delete_flag(flag)
         return await ctx.respond(
-            embed=command_embed(description=f"Successfully deleted {flag}")
+            embed=command_embed(description=f"Successfully deleted `{flag}`")
         )
 
     @slash_command(
@@ -203,7 +203,7 @@ class Score(commands.Cog):
 
         if flag_data is None:
             return await ctx.respond(
-                embed=command_embed(description=f"{flag} is invalid", error=True),
+                embed=command_embed(description=f"`{flag}` is invalid", error=True),
                 ephemeral=True,
             )
 
@@ -222,7 +222,7 @@ class Score(commands.Cog):
         await self.firestore.add_points(str(ctx.author), flag_data["points"], flag)
         return await ctx.respond(
             embed=command_embed(
-                description=f"{ctx.author.mention} has successfully claimed {flag} for {flag_data['points']}"
+                description=f"{ctx.author.mention} has successfully claimed `{flag}` for `{flag_data['points']} points`"
             ),
             ephemeral=True,
         )
