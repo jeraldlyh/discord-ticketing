@@ -23,22 +23,35 @@ class Score(commands.Cog):
         self,
         ctx,
         user: Option(discord.Member, "Enter a Discord user", required=True),
-        points: Option(int, "Enter a number between 1 to 5", min=1, max=5, required=False, default=1),
+        points: Option(
+            int,
+            "Enter a number between 1 to 5",
+            min_value=1,
+            max_value=5,
+            required=False,
+            default=1,
+        ),
     ):
         try:
             await ctx.interaction.response.defer()
             username = str(user)
-            role = [role for role in ctx.author.roles if role.name != ctx.guild.default_role.name and role.name != "Sponsor"][0]
+            role = [
+                role
+                for role in ctx.author.roles
+                if role.name != ctx.guild.default_role.name and role.name != "Sponsor"
+            ][0]
 
             await self.firestore.add_points(username, points, str(role))
             return await ctx.interaction.response.send_message(
                 embed=command_embed(
                     description=f"Successfully added {points} point to {user.mention}"
                 ),
-                ephemeral=True
+                ephemeral=True,
             )
         except MaxPointsError as e:
-            return await ctx.respond(embed=command_embed(description=str(e), error=True))
+            return await ctx.respond(
+                embed=command_embed(description=str(e), error=True)
+            )
         except Exception as e:
             return await ctx.respond(str(e))
 
@@ -72,8 +85,6 @@ class Score(commands.Cog):
             )
         except ValueError:
             return await ctx.respond(embed=insufficient_points_embed(user))
-        except SyntaxError as e:
-            return await ctx.respond(embed=command_embed(description=str(e), error=True))
 
     # @commands.command()
     # @commands.has_any_role("Sponsor")

@@ -40,9 +40,6 @@ class Firestore:
         await doc_ref.set(DEFAULT_PROFILE)
 
     async def add_points(self, username: str, points: int, role: str):
-        if points < 1 or points > 5:
-            raise SyntaxError("Points must be within 1 to 5")
-
         user_doc = await self.get_user_doc(username)
 
         if role in user_doc["points"] and user_doc["points"][role] == 6:
@@ -55,9 +52,6 @@ class Firestore:
             })
 
     async def minus_points(self, username: str, points: int):
-        if points < 1 or points > 5:
-            raise SyntaxError("Points must be within 1 to 5")
-
         user_doc = await self.get_user_doc(username)
         if user_doc["points"] == 0:
             raise ValueError("User has insufficient points")
