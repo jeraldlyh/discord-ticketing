@@ -1,5 +1,7 @@
+import os
+
 from firebase_admin import firestore
-from cogs.exception import InsufficientPointsError, MaxPointsError, NotFoundError
+from cogs.exception import InsufficientPointsError, MaxPointsError
 
 DEFAULT_PROFILE = {
     "points": {},
@@ -45,11 +47,13 @@ class Firestore:
 
         if type_ in user_doc["points"]:
             existing_points = user_doc["points"][type_]
-            if existing_points > 6:
-                raise MaxPointsError(f"{username} already has 6 points from `{type_}`")
-            elif existing_points + points > 6:
+            max_points = int(os.getenv("MAX_POINTS"))
+
+            if existing_points > max_points:
+                raise MaxPointsError(f"{username} already has {max_points} points from `{type_}`")
+            elif existing_points + points > max_points:
                 raise MaxPointsError(
-                    f"{username} can only receive maximum of {6 - existing_points} points"
+                    f"{username} can only receive maximum of {max_points - existing_points} points"
                 )
 
         doc_ref = self.get_user_doc_ref(username)
