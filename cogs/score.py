@@ -25,9 +25,9 @@ class Score(commands.Cog):
         user: Option(discord.Member, "Enter a Discord user", required=True),
         points: Option(
             int,
-            "Enter a number between 1 to 5",
+            f"Enter a number between 1 to {int(os.getenv('MAX_POINTS'))}",
             min_value=1,
-            max_value=5,
+            max_value={int(os.getenv("MAX_POINTS"))},
             required=False,
             default=1,
         ),
@@ -67,9 +67,9 @@ class Score(commands.Cog):
         user: Option(discord.Member, "Enter a Discord user", required=True),
         points: Option(
             int,
-            "Enter a number between 1 to 5",
+            f"Enter a number between 1 to {int(os.getenv('MAX_POINTS'))}",
             min_value=1,
-            max_value=5,
+            max_value={int(os.getenv("MAX_POINTS"))},
             required=False,
             default=1,
         ),
