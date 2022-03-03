@@ -231,6 +231,7 @@ class CustomButton(discord.ui.Button):
                 description=f"You can find your ticket at {channel.mention}"
             ),
             delete_after=10,
+            ephemeral=True,
         )
 
         return await self.firestore.register_ticket(
