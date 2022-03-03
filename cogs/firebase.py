@@ -134,24 +134,24 @@ class Firestore:
         return self.db.collection(self.TICKET_COLLECTION).document(ticket_id)
 
     async def register_ticket(
-        self, ticket_id: str, is_root: bool, username: str, role_id: str
+        self, ticket_id: str, is_root: bool, user_id: str, role_id: str
     ):
         ticket_doc = {
             "id": ticket_id,
             "last_updated": firestore.SERVER_TIMESTAMP,
             "is_available": True,
             "is_root": is_root,
-            "username": username,
+            "user_id": user_id,
             "role_id": role_id,
         }
 
         doc_ref = self.get_ticket_doc_ref(ticket_id)
         await doc_ref.set(ticket_doc)
 
-    async def is_ticket_exist(self, username: str):
+    async def is_ticket_exist(self, user_id: str):
         tickets = (
             self.db.collection(self.TICKET_COLLECTION)
-            .where("username", "==", username)
+            .where("user_id", "==", user_id)
             .where("is_available", "==", True)
         )
         docs = tickets.stream()
@@ -179,12 +179,12 @@ class Firestore:
 
         return [doc.to_dict() async for doc in docs]
 
-    async def delete_ticket(self, username: str):
+    async def delete_ticket(self, user_id: str):
         query = (
             self.db.collection(self.TICKET_COLLECTION)
             .where("is_root", "==", False)
             .where("is_available", "==", True)
-            .where("username", "==", username)
+            .where("user_id", "==", user_id)
         )
         tickets = await query.get()
         ticket_id = tickets[0].to_dict()["id"]

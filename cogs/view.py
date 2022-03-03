@@ -1,4 +1,3 @@
-from pprint import pprint
 import discord
 import os
 
@@ -58,9 +57,10 @@ from cogs.firebase import Firestore
 
 
 class TicketView(discord.ui.View):
-    def __init__(self, role_id: int, firestore: Firestore):
+    def __init__(self, role_id: int, user_id: int, firestore: Firestore):
         super().__init__(timeout=None)
         self.role_id = role_id
+        self.user_id = user_id
         self.is_claimed = False
         self.firestore = firestore
 
@@ -97,29 +97,34 @@ class TicketView(discord.ui.View):
         emoji="🔒",
     )
     async def close(self, button: discord.ui.Button, interaction: discord.Interaction):
-        user = interaction.user
-        channel = interaction.channel
-
         # TODO - Add an interaction response?
         await interaction.response.defer()  # Defer and ignore interaction response
 
+        channel = interaction.channel
+        user = discord.utils.get(interaction.guild.members, id=int(self.user_id))
+
         if (
-            not self.is_interaction_allowed(user)
+            not self.is_interaction_allowed(interaction.user)
             and channel.name != str(user).replace("#", "").lower()
         ):
             return
 
-        role = discord.utils.get(interaction.guild.roles, id=int(channel.topic))
-
+        role = discord.utils.get(interaction.guild.roles, id=int(self.role_id))
         log_channel = discord.utils.get(
             interaction.guild.channels, name=os.getenv("LOGGING_CHANNEL")
         )
 
         await log_channel.send(
-            embed=self.ticket_log_embed(user.name, role=role, is_log=True)
+            embed=self.ticket_log_embed(
+                user.name, closed_by=str(interaction.user), role=role, is_log=True
+            )
         )
-        await user.send(embed=self.ticket_log_embed(user.name, role=role, is_log=False))
-        await self.firestore.delete_ticket(str(user))
+        await user.send(
+            embed=self.ticket_log_embed(
+                user.name, closed_by=str(interaction.user), role=role, is_log=False
+            )
+        )
+        await self.firestore.delete_ticket(str(user.id))
         return await channel.delete()
 
         # return await channel.send(
@@ -145,10 +150,10 @@ class TicketView(discord.ui.View):
     def confirmation_embed(self):
         return discord.Embed(description="Are you sure you want to close this ticket?")
 
-    def ticket_log_embed(self, user: str, role: str, is_log=False):
+    def ticket_log_embed(self, user: str, closed_by: str, role: str, is_log=False):
         return discord.Embed(
             title=f"{user}'s Ticket Closed" if is_log else "Ticket Closed",
-            description=f"The ticket for {role} has just been closed.",
+            description=f"The ticket for {role} has just been closed by {closed_by}.",
             color=discord.Color.red() if is_log else discord.Color(0xFFD700),
         )
 
@@ -209,12 +214,14 @@ class CustomButton(discord.ui.Button):
         channel = await self.guild.create_text_channel(
             name=str(user), category=support_category, overwrites=permission
         )
-        await channel.edit(topic=role.id)  # Set ticket role ID in channel topic
+        await channel.edit(
+            topic=str(role.id)
+        )  # Set ticket role and user ID in channel topic
         embed = self.ticket_embed(user, role)
         message = await channel.send(
             content=f"{user.mention} {role.mention}",
             embed=embed,
-            view=TicketView(role.id, self.firestore),
+            view=TicketView(role.id, int(user.id), self.firestore),
         )
 
         # Respond to interaction to prevent 404 Unknown Interaction
@@ -227,7 +234,7 @@ class CustomButton(discord.ui.Button):
         )
 
         return await self.firestore.register_ticket(
-            str(message.id), False, str(user), str(role.id)
+            str(message.id), False, str(user.id), str(role.id)
         )
 
     def ticket_embed(
