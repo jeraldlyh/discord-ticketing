@@ -8,6 +8,9 @@ from cogs.exception import InsufficientPointsError, MaxPointsError, NotFoundErro
 from cogs.firebase import Firestore
 
 
+MAX_POINTS = int(os.getenv("MAX_POINTS"))
+
+
 class Score(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -25,9 +28,9 @@ class Score(commands.Cog):
         user: Option(discord.Member, "Enter a Discord user", required=True),
         points: Option(
             int,
-            f"Enter a number between 1 to {int(os.getenv('MAX_POINTS'))}",
+            f"Enter a number between 1 to {MAX_POINTS}",
             min_value=1,
-            max_value={int(os.getenv("MAX_POINTS"))},
+            max_value=MAX_POINTS,
             required=False,
             default=1,
         ),
@@ -67,9 +70,9 @@ class Score(commands.Cog):
         user: Option(discord.Member, "Enter a Discord user", required=True),
         points: Option(
             int,
-            f"Enter a number between 1 to {int(os.getenv('MAX_POINTS'))}",
+            f"Enter a number between 1 to {MAX_POINTS}",
             min_value=1,
-            max_value={int(os.getenv("MAX_POINTS"))},
+            max_value=MAX_POINTS,
             required=False,
             default=1,
         ),
