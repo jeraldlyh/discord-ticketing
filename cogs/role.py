@@ -49,7 +49,7 @@ class Role(commands.Cog):
         await self.firestore.create_role(role_id, role.name, emoji)
         return await ctx.respond(
             embed=command_embed(
-                description=f"Successfully created `{role.mention}` with a reaction `{emoji}`"
+                description=f"Successfully created {role.mention} with a reaction `{emoji}`"
             )
         )
 
