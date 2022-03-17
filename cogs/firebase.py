@@ -50,7 +50,9 @@ class Firestore:
             max_points = int(os.getenv("MAX_POINTS"))
 
             if existing_points > max_points:
-                raise MaxPointsError(f"{username} already has {max_points} points from `{type_}`")
+                raise MaxPointsError(
+                    f"{username} already has {max_points} points from `{type_}`"
+                )
             elif existing_points + points > max_points:
                 raise MaxPointsError(
                     f"{username} can only receive maximum of {max_points - existing_points} points"
@@ -112,9 +114,12 @@ class Firestore:
         return doc.to_dict()
 
     async def create_role(self, id: str, name: str, emoji: str):
-        role_doc = {"id": id, "name": name, "emoji": emoji}
-
         doc_ref = self.get_role_doc_ref(id)
+
+        all_roles = await self.get_all_roles()
+        max_order = max([role["order"] for role in all_roles]) if all_roles else 1
+        role_doc = {"id": id, "name": name, "emoji": emoji, "order": max_order}
+
         await doc_ref.set(role_doc)
 
     async def delete_role(self, id: str):
