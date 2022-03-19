@@ -78,6 +78,7 @@ class TicketView(discord.ui.View):
             return
 
         channel = interaction.channel
+        ticket_user = user
 
         # Ticket user does not have any other roles except @everyone
         for member in channel.members:
