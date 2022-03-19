@@ -164,9 +164,10 @@ class Score(commands.Cog):
         ),
     ):
         await self.firestore.create_flag(flag, points)
+        plural = points == 1
         return await ctx.respond(
             embed=command_embed(
-                description=f"Successfully created `{flag}` with `{points} points`"
+                description=f"Successfully created `{flag}` with `{points} {'points' if plural else 'point'}`"
             )
         )
 
