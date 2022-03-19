@@ -16,7 +16,7 @@ class Role(commands.Cog):
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
         name="create_role",
-        description="Register a role with specified emoji that appears as a button on interaction message",
+        description="Register a role with specified emoji that appears as a button on ticketing message",
     )
     @commands.has_any_role("Server Support")
     async def _create_role(
@@ -54,7 +54,7 @@ class Role(commands.Cog):
     @slash_command(
         guild_ids=[int(os.getenv("GUILD_ID"))],
         name="delete_role",
-        description="Delete a role that on interaction message",
+        description="Delete a role that on appears on the ticketing message",
     )
     @commands.has_any_role("Server Support")
     async def _delete_role(
