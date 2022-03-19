@@ -12,7 +12,10 @@ User is able to raise a ticket by interacting with the buttons on a support mess
     -   `/create_flag <name> <points>` - Create a claimable flag with the specified points
     -   `/delete_flag <name>` - Delete previously created flag
     -   `/create_role <name> <emoji>` - Create a role with the specified emoji that will be displayed as a button on the main ticketing message
-    -   `/delete_role <name>` - Delete previously created role
+    -   `/delete_role <name>` - Delete previously created role that appears on ticketing message
+    -   `/add_regex <regexPattern>`- Add a regex pattern in memory for bot to watch for blacklisted messages
+    -   `/enable_cog <cog>` - Manually enable a cog
+    -   `/disable_cog <cog>` - Manually disable a cog
 -   **Moderators**
     -   `/block <user>` - Blocks specified user and prevent them from utilising ticketing system
     -   `/unblock <user>` - Unblocks specified user
