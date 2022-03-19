@@ -37,3 +37,9 @@ def insufficient_points_embed(user: discord.Member):
     embed = command_embed(description=f"{user.mention} does not have sufficient points", error=True)
 
     return embed
+
+def warning_embed(user: discord.Member):
+    embed = discord.Embed(color=discord.Color.red())
+    embed.description = f"{user.mention} attempted to share a flag"
+
+    return embed
