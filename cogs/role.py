@@ -25,6 +25,8 @@ class Role(commands.Cog):
         role: Option(discord.Role, "Enter a Discord role", required=True),
         emoji: Option(str, "Enter an emoji", required=True),
     ):
+        await ctx.interaction.response.defer()
+
         role_id = str(role.id)
         role_docs = await self.firestore.get_all_roles()
 
@@ -47,7 +49,7 @@ class Role(commands.Cog):
         await self.firestore.create_role(role_id, role.name, emoji)
         return await ctx.respond(
             embed=command_embed(
-                description=f"Successfully created a role reaction with {emoji}"
+                description=f"Successfully created {role.mention} with a reaction `{emoji}`"
             )
         )
 
@@ -60,6 +62,8 @@ class Role(commands.Cog):
     async def _delete_role(
         self, ctx, role: Option(discord.Role, "Enter a Discord role", required=True)
     ):
+        await ctx.interaction.response.defer(ephemeral=True)
+
         role_id = str(role.id)
         role_doc = await self.firestore.get_role_doc(role_id)
 
@@ -72,7 +76,7 @@ class Role(commands.Cog):
 
         await self.firestore.delete_role(role_id)
         return await ctx.respond(
-            embed=command_embed(description=f"Successfully deleted {role.name}")
+            embed=command_embed(description=f"Successfully deleted `{role.name}`")
         )
 
     @slash_command(

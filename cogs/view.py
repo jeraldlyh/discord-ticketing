@@ -286,7 +286,6 @@ class TicketSupportView(discord.ui.View):
         self.firestore = firestore
 
         for role in self.roles:
-
             button = CustomButton(
                 ctx=self.ctx,
                 id=role["id"],

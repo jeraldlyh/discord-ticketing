@@ -21,6 +21,7 @@ class Reaction(commands.Cog):
     async def react(self, ctx):
         guild = ctx.guild
         roles = await self.firestore.get_all_roles()
+        roles = sorted(roles, key=lambda x: int(x['order']))
         view = TicketSupportView(ctx, roles, guild, self.firestore)
 
         description = f"""
