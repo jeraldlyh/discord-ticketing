@@ -3,7 +3,7 @@ import os
 
 from discord.ext import commands
 from discord.commands import slash_command, Option
-from cogs.utils.embed import command_embed, insufficient_points_embed
+from cogs.utils.embed import command_embed
 from cogs.exception import InsufficientPointsError, MaxPointsError, NotFoundError
 from cogs.firebase import Firestore
 
@@ -228,6 +228,22 @@ class Score(commands.Cog):
                 description=f"{ctx.author.mention} has successfully claimed `{flag}` for `{flag_data['points']} points`"
             ),
             ephemeral=True,
+        )
+
+    @slash_command(
+        guild_ids=[int(os.getenv("GUILD_ID"))],
+        name="generate",
+        description=f"Generate scores into a JSON file",
+    )
+    @commands.has_permissions(administrator=True)
+    async def _generate(self, ctx):
+        await ctx.interaction.response.defer()
+
+        await self.firestore.generate_scores()
+        return await ctx.respond(
+            embed=command_embed(
+                description=f"{ctx.author.mention} has successfully generated `scores.json`"
+            ),
         )
 
 

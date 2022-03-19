@@ -2,7 +2,6 @@ import os
 import discord
 import pytz
 import datetime
-from cogs.utils.embed import command_embed
 import firebase_admin
 
 from dotenv import load_dotenv

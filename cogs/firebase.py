@@ -1,3 +1,4 @@
+import json
 import os
 
 from firebase_admin import firestore
@@ -219,3 +220,17 @@ class Firestore:
         flag_doc = self.get_flag_doc_ref(flag)
 
         await flag_doc.update({"is_available": False})
+
+    async def generate_scores(self):
+        all_docs = self.db.collection(self.USER_COLLECTION).stream()
+        data = {"score": []}
+
+        async for doc in all_docs:
+            # user_id = doc.id
+            user_data = {**doc.to_dict(), "id": doc.id}
+            # user_data = doc.to_dict()
+            # setattr(user_data, 'id', user_id)
+            data["score"].append(user_data)
+
+        with open("scores.json", "w+") as score_file:
+            json.dump(data, indent=4, fp=score_file, default=str)
