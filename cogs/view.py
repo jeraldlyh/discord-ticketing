@@ -104,6 +104,9 @@ class TicketView(discord.ui.View):
         channel = interaction.channel
         user = discord.utils.get(interaction.guild.members, id=int(self.user_id))
 
+        if (isinstance(channel, discord.PartialMessageable)):
+            channel = discord.utils.get(interaction.guild.channels, id=int(channel.id))
+
         if (
             not self.is_interaction_allowed(interaction.user)
             and channel.name != str(user).replace("#", "").lower()
