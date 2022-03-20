@@ -193,6 +193,10 @@ class Firestore:
             .where("user_id", "==", user_id)
         )
         tickets = await query.get()
+
+        if len(tickets) == 0:
+            return
+
         ticket_id = tickets[0].to_dict()["id"]
 
         ticket = self.get_ticket_doc_ref(ticket_id)
